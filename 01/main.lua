@@ -1,5 +1,3 @@
-local pcall = pcall
-
 local love = love
 local g = love.graphics
 local window = love.window
@@ -17,19 +15,18 @@ function love.load()
   })
 end
 
+function love.update()
+end
+
 function love.draw()
   local width, height, flags = window.getMode()
   g.printf(text, font, 32, 32, width - 64)
 end
 
-function love.keypressed(key)
+function love.directorydropped(path)
+  print(path)
 end
 
-function love.keyreleased(key)
-end
-
-function love.textedited(text, start, length)
-end
-
-function love.textinput(text)
+function love.filedropped(file)
+  print(file:getFilename())
 end
