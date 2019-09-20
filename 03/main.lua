@@ -29,8 +29,9 @@ function love.load()
 end
 
 function love.update(dt)
-  local character = characters[character_i]
-  character:update(dt)
+  for i = 1, #characters do
+    characters[i]:update(dt, i == character_i)
+  end
 end
 
 function love.draw()

@@ -33,45 +33,54 @@ local function construct(filename, x, y)
   return {
     x = x or 0;
     y = y or 0;
+    orientation = 1;
+    animation = 2;
     i = 2;
     image = image;
     tiles = tiles;
   }
 end
 
-function class:update(dt)
-  local speed = 144
-  local x = self.x
-  local y = self.y
-  local i = self.i
+function class:update(dt, active)
 
-  if isDown "up" then
-    y = y - speed * dt
-    i = 11
+  local animation_speed = 4
+  self.animation = self.animation + animation_speed * dt
+
+  if active then
+    local speed = 144
+    local x = self.x
+    local y = self.y
+    local orientation = self.orientation
+
+    if isDown "up" then
+      y = y - speed * dt
+      orientation = 4
+    end
+
+    if isDown "right" then
+      x = x + speed * dt
+      orientation = 3
+    end
+
+    if isDown "down" then
+      y = y + speed * dt
+      orientation = 1
+    end
+
+    if isDown "left" then
+      x = x - speed * dt
+      orientation = 2
+    end
+
+    self.x = x
+    self.y = y
+    self.orientation = orientation
   end
-
-  if isDown "right" then
-    x = x + speed * dt
-    i = 8
-  end
-
-  if isDown "down" then
-    y = y + speed * dt
-    i = 2
-  end
-
-  if isDown "left" then
-    x = x - speed * dt
-    i = 5
-  end
-
-  self.x = x
-  self.y = y
-  self.i = i
 end
 
 function class:draw()
-  g.draw(self.image, self.tiles[self.i], self.x, self.y)
+  local quad = self.tiles[(self.orientation - 1) * 3 + math.floor(self.animation) % 3 + 1]
+  g.draw(self.image, quad, self.x, self.y)
 end
 
 return setmetatable(class, {
