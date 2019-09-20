@@ -8,6 +8,8 @@ local window = love.window
 
 local characters = {}
 local character_i = 1
+local audio1
+local audio2
 
 function love.load()
   local character_filenames = {
@@ -26,6 +28,9 @@ function love.load()
   for i = 1, #character_filenames do
     characters[i] = character(character_filenames[i], (i - 1) * 48)
   end
+
+  audio1 = love.audio.newSource("yurudora.ogg", "stream")
+  audio2 = love.audio.newSource("hometown.ogg", "stream")
 end
 
 function love.update(dt)
@@ -57,5 +62,15 @@ function love.keypressed(key, scancode, isrepeat)
       end
     end
     character_i = i
+  elseif key == "return" then
+    if audio1:isPlaying() then
+      audio1:stop()
+      audio2:play()
+    elseif audio2:isPlaying() then
+      audio2:stop()
+      audio1:play()
+    else
+      audio1:play()
+    end
   end
 end

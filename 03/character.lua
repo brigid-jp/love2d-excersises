@@ -42,7 +42,6 @@ local function construct(filename, x, y)
 end
 
 function class:update(dt, active)
-
   local animation_speed = 4
   self.animation = self.animation + animation_speed * dt
 
