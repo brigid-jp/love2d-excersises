@@ -31,6 +31,9 @@ function love.load()
 
   audio1 = love.audio.newSource("yurudora.ogg", "stream")
   audio2 = love.audio.newSource("hometown.ogg", "stream")
+
+  audio1:setLooping(true)
+  audio2:setLooping(true)
 end
 
 function love.update(dt)
