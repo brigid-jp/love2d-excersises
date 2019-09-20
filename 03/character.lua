@@ -4,7 +4,7 @@ local isDown = love.keyboard.isDown
 local class = {}
 local metatable = { __index = class }
 
-local function construct(filename)
+local function construct(filename, x, y)
   local image = g.newImage(filename)
 
   local sw, sh = image:getDimensions()
@@ -31,8 +31,8 @@ local function construct(filename)
   }
 
   return {
-    x = 0;
-    y = 0;
+    x = x or 0;
+    y = y or 0;
     i = 2;
     image = image;
     tiles = tiles;
