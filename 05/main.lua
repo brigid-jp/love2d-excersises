@@ -14,9 +14,6 @@ function love.update(dt)
 end
 
 function love.draw()
-  -- 24 入力エリア
-  -- テキストエリア
-
   local width, height = window.getMode()
 
   if edited then
