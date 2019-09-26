@@ -8,8 +8,6 @@ function love.load()
   flags.resizable = true;
 
   window.setMode(width, height, flags)
-
-  print("getDisplayOrientation", window.getDisplayOrientation)
 end
 
 function love.update(dt)
