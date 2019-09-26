@@ -8,6 +8,7 @@ local buffer = {}
 
 function love.load()
   font = g.newFont("mplus-1p-regular.ttf", 24)
+  love.keyboard.setTextInput(true);
 end
 
 function love.update(dt)
