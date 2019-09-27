@@ -35,13 +35,20 @@ end
 
 function love.mousepressed(x, y, button, istouch, presses)
   if not istouch then
-    push_event(("mousepressed %.17g %.17g %.17g %s"):format(x, y, button, istouch, presses))
+    push_event(("mousepressed %.17g %.17g %.17g %s %d"):format(x, y, button, istouch, presses))
+  end
+  if presses == 2 then
+    local result = window.showMessageBox(
+      "ゲームを終了しますか？", "", { "OK", "Cancel" })
+    if result == 1 then
+      love.event.quit()
+    end
   end
 end
 
 function love.mousereleased(x, y, button, istouch, presses)
   if not istouch then
-    push_event(("mousereleased %.17g %.17g %.17g %s"):format(x, y, button, istouch, presses))
+    push_event(("mousereleased %.17g %.17g %.17g %s %d"):format(x, y, button, istouch, presses))
   end
 end
 
