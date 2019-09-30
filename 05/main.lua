@@ -7,8 +7,10 @@ local edited
 local buffer = {}
 
 function love.load()
+  local width, height = window.getMode()
+
   font = g.newFont("mplus-1p-regular.ttf", 24)
-  love.keyboard.setTextInput(true);
+  love.keyboard.setTextInput(true, 0, 0, width, 24);
 end
 
 function love.update(dt)
