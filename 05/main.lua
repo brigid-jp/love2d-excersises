@@ -10,7 +10,8 @@ function love.load()
   local width, height = window.getMode()
 
   font = g.newFont("mplus-1p-regular.ttf", 24)
-  love.keyboard.setTextInput(true, 0, 0, width, 24);
+  love.keyboard.setTextInput(true, 24, 24, width - 48, 24);
+  -- love.keyboard.setTextInput(true);
 end
 
 function love.update(dt)
@@ -20,10 +21,17 @@ function love.draw()
   local width, height = window.getMode()
 
   if edited then
-    g.printf(edited.text, font, 0, 0, width)
+    g.setColor(1, 0, 0)
+    g.printf(edited.text, font, 24, 24, width - 48)
   end
 
-  g.printf(table.concat(buffer), font, 0, 24, width)
+  g.setColor(1, 1, 0)
+  g.printf(table.concat(buffer), font, 24, 48, width - 48)
+
+  g.setColor(1, 1, 1)
+  g.printf(("%s %s"):format(
+      love.keyboard.hasTextInput(),
+      love.keyboard.hasScreenKeyboard()), font, 24, 96, width - 48)
 end
 
 function love.keypressed(key)
