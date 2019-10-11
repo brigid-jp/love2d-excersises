@@ -1,12 +1,12 @@
+local data = require "love.data"
 local filesystem = require "love.filesystem"
 local timer = require "love.timer"
 local http = require "socket.http"
 local ltn12 = require "ltn12"
 
 local urls = {
-  "http://brigid.jp/love2d-excersise/NotoSerifCJKjp-Regular.otf";
+  -- "http://brigid.jp/love2d-excersise/NotoSerifCJKjp-Regular.otf";
   "http://brigid.jp/love2d-excersise/mplus-1p-regular.ttf";
-  -- "http://brigid.jp/love2d-excersise/";
 }
 
 local function save(file)
@@ -33,5 +33,7 @@ for i = 1, #urls do
     sink = save(file);
   }
   file:close()
-  ch:push { "fetched", url }
+  local d = filesystem.newFileData(filename)
+  local sha256 = data.encode("string", "hex", data.hash("sha256", d))
+  ch:push { "fetched", filename, sha256 }
 end

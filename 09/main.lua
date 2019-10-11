@@ -4,6 +4,7 @@ local window = love.window
 
 local thread
 local buffer = { "false\n" }
+local font
 
 function love.load()
   thread = love.thread.newThread "thread.lua"
@@ -19,11 +20,18 @@ function love.update(dt)
     if not v then
       break
     end
-    buffer[#buffer + 1] = v[1] .. " " .. v[2] .. "\n"
+    buffer[#buffer + 1] = table.concat(v, " ") .. "\n"
+    if v[1] == "fetched" and v[2]:find "%.[ot]tf" then
+      font = g.newFont(v[2], 24)
+    end
   end
 end
 
 function love.draw()
   local width, height = window.getMode()
-  g.printf(table.concat(buffer), 0, 50, width)
+  if font then
+    g.printf(table.concat(buffer), font, 0, 50, width)
+  else
+    g.printf(table.concat(buffer), 0, 50, width)
+  end
 end
