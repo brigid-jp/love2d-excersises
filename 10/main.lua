@@ -12,7 +12,12 @@ local version
 local codename
 local sdl_version
 
-ffi.cdef [[
+function love.load()
+  local major, minor, revision
+  major, minor, revision, codename = love.getVersion()
+  version = ("%d.%d.%d"):format(major, minor, revision)
+
+  ffi.cdef [[
 typedef struct {
   uint8_t major;
   uint8_t minor;
@@ -22,13 +27,34 @@ typedef struct {
 void SDL_GetVersion(SDL_version* ver);
 ]]
 
-function love.load()
-  local major, minor, revision
-  major, minor, revision, codename = love.getVersion()
-  version = ("%d.%d.%d"):format(major, minor, revision)
+  local a, b = pcall(function ()
+    local ver = ffi.new "SDL_version"
+    ffi.C.SDL_GetVersion(ver)
+    return ver
+  end)
 
-  local sdl_ver = ffi.new "SDL_version"
-  ffi.C.SDL_GetVersion(sdl_ver)
+  local sdl_ver = {
+    major = 0;
+    minor = 0;
+    patch = 0;
+  }
+
+  if a then
+    sdl_ver = b
+  else
+    print(b)
+    local a, b = pcall(function ()
+      local ver = ffi.new "_SDL_version"
+      ffi.C.SDL_GetVersion(ver)
+      return ver
+    end)
+    if a then
+      sdl_ver = b
+    else
+      print(b)
+    end
+  end
+
   sdl_version = ("%d.%d.%d"):format(sdl_ver.major, sdl_ver.minor, sdl_ver.patch)
 end
 
