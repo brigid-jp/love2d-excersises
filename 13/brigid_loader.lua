@@ -1,12 +1,14 @@
-local data = require "love.data"
-local filesystem = require "love.filesystem"
-local system = require "love.system"
-local thread = require "love.thread"
+local love = {
+  data = require "love.data";
+  filesystem = require "love.filesystem";
+  system = require "love.system";
+  thread = require "love.thread";
+}
 local http = require "socket.http"
 
-local ch = thread.getChannel "brigid_loader"
+local ch = love.thread.getChannel "brigid_loader"
 
-local os = system.getOS()
+local os = love.system.getOS()
 local arch = jit.arch
 local url
 local filename
@@ -31,7 +33,7 @@ if not url then
   return
 end
 
-local file = assert(filesystem.newFile(filename, "w"))
+local file = assert(love.filesystem.newFile(filename, "w"))
 
 http.request {
   url = url;
@@ -47,10 +49,10 @@ http.request {
 
 file:close()
 
-local hash = data.encode("string", "hex", data.hash("sha256", assert(filesystem.newFileData(filename))))
+local hash = love.data.encode("string", "hex", love.data.hash("sha256", assert(love.filesystem.newFileData(filename))))
 if hash == sha256 then
   ch:push "ok"
 else
-  filesystem.remove(filename)
+  love.filesystem.remove(filename)
   ch:push "error"
 end
