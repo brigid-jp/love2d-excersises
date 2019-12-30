@@ -1,32 +1,19 @@
 local brigid
-local brigid_loader
-local brigid_loader_state
+local brigid_loader = require "brigid_loader"
 
-pcall(function () brigid = require "brigid" end)
-
+local loader
 local text = {}
 
+function love.load()
+  loader = brigid_loader()
+end
+
 function love.update(dt)
-  if brigid then
-    text[1] = brigid.get_version() .. "\n"
-  else
-    if brigid_loader then
-      if not brigid_loader_state then
-        local ch = love.thread.getChannel "brigid_loader"
-        local v = ch:pop()
-        if v then
-          text[#text + 1] = v .. "\n"
-          if v == "ok" then
-            pcall(function () brigid = require "brigid" end)
-          end
-          brigid_loader_state = 1
-        end
-      end
-    else
-      brigid_loader = love.thread.newThread "brigid_loader_thread.lua"
-      brigid_loader:start()
-    end
+  if loader:update() == "loaded" then
+    brigid = loader.module
   end
+  text[1] = loader.state .. "\n"
+  text[2] = tostring(brigid)
 end
 
 function love.draw()

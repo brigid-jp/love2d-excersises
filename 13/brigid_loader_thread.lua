@@ -48,12 +48,10 @@ end
 local new_filename = filename .. ".new"
 local file = assert(love.filesystem.newFile(new_filename, "w"))
 
-print "requesting..."
 http.request {
   url = module.url;
   sink = function (chunk, e)
     if chunk then
-      print(#chunk)
       file:write(chunk)
     elseif e then
       error(e)
@@ -61,13 +59,11 @@ http.request {
     return true
   end;
 }
-print "done..."
 
 file:close()
 
 local hash = love.data.hash("sha256", assert(love.filesystem.newFileData(new_filename)))
 if hash == module.sha256 then
-  print "ok"
   assert(love.filesystem.write(filename, assert(love.filesystem.read(new_filename))))
   assert(love.filesystem.remove(new_filename))
   ch:push "ok"
