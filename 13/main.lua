@@ -23,7 +23,7 @@ function love.update(dt)
         end
       end
     else
-      brigid_loader = love.thread.newThread "brigid_loader.lua"
+      brigid_loader = love.thread.newThread "brigid_loader_thread.lua"
       brigid_loader:start()
     end
   end
