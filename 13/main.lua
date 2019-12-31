@@ -1,19 +1,19 @@
-local brigid
-local brigid_loader = require "brigid_loader"
+local brigid_bootloader = require "brigid_bootloader"
 
-local loader
+local brigid
+local bootloader
 local text = {}
 
 function love.load()
-  loader = brigid_loader()
+  bootloader = brigid_bootloader()
 end
 
 function love.update(dt)
-  if loader:update() == "loaded" then
-    brigid = loader.module
+  if not brigid then
+    if bootloader:update() == "loaded" then
+      brigid = bootloader.module
+    end
   end
-  text[1] = loader.state .. "\n"
-  text[2] = tostring(brigid)
 end
 
 function love.draw()
