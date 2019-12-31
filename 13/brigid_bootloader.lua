@@ -12,7 +12,7 @@ local love = {
 local class = {}
 local metatable = { __index = class }
 
-local modules = {
+class.module_definitions = {
   ["OS X/x64"] = {
     url = "http://brigid.jp/pub/brigid-1.4-osx-x64.so";
     size = 160744;
@@ -27,19 +27,23 @@ local modules = {
   };
 }
 
-local function check(module)
+function class.check(module)
   local fileinfo = love.filesystem.getInfo(module.filename)
   if fileinfo then
     return fileinfo.size == module.size and love.data.hash("sha256", assert(love.filesystem.newFileData(module.filename))) == module.sha256
   end
 end
 
+function class.get_module_definition()
+  return class.modules[love.system.getOS() .. "/" .. jit.arch]
+end
+
 local function new()
   local self = {}
 
-  local module = modules[love.system.getOS() .. "/" .. jit.arch]
+  local module = class.get_module_definition()
   if module then
-    if check(module) then
+    if class.check(module) then
       self.module = require "brigid"
     else
       love.filesystem.remove(module.filename)
