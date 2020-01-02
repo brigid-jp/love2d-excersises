@@ -25,6 +25,12 @@ class.module_definitions = {
     sha256 = "\159\033\224\253\071\249\141\083\235\018\139\219\050\160\173\053\103\023\021\031\227\085\043\216\016\198\024\223\132\029\152\114";
     filename = "brigid.dll";
   };
+  ["Windows/x86"] = {
+    url = "http://brigid.jp/pub/brigid-1.4-win-x86.so";
+    size = 86528;
+    sha256 = "\177\115\029\241\154\050\204\143\169\120\144\053\086\183\063\105\008\014\106\046\109\049\045\188\055\237\104\048\095\007\161\071";
+    filename = "brigid.dll";
+  };
 }
 
 function class.check(module)
@@ -35,6 +41,8 @@ function class.check(module)
 end
 
 function class.get_module_definition()
+  local key = love.system.getOS() .. "/" .. jit.arch
+  print("key", key)
   return class.module_definitions[love.system.getOS() .. "/" .. jit.arch]
 end
 
