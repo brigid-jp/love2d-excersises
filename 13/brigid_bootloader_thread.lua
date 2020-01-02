@@ -12,7 +12,7 @@ local brigid_bootloader = require "brigid_bootloader"
 
 local channel = love.thread.getChannel "brigid_bootloader"
 
-local module = assert(brigid_bootloader.get_module_defini_definition())
+local module = assert(brigid_bootloader.get_module_definition())
 local file = assert(love.filesystem.newFile(module.filename, "w"))
 
 http.request {

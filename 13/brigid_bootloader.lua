@@ -35,7 +35,7 @@ function class.check(module)
 end
 
 function class.get_module_definition()
-  return class.modules[love.system.getOS() .. "/" .. jit.arch]
+  return class.module_definitions[love.system.getOS() .. "/" .. jit.arch]
 end
 
 local function new()

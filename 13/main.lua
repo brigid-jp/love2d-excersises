@@ -2,7 +2,9 @@ local brigid_bootloader = require "brigid_bootloader"
 
 local brigid
 local bootloader
-local text = {}
+local text = {
+  "loading brigid...\n"
+}
 
 function love.load()
   bootloader = brigid_bootloader()
@@ -13,6 +15,9 @@ function love.update(dt)
     if bootloader:update() == "loaded" then
       brigid = bootloader.module
     end
+  end
+  if brigid then
+    text[1] = "brigid version " .. brigid.get_version() .. "\n"
   end
 end
 
