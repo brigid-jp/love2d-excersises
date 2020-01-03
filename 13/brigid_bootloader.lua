@@ -40,25 +40,48 @@ function class.check(module)
   end
 end
 
+function class.check_module(fileinfo, module_definition)
+  if fileinfo.size == module_definition.size then
+    local data = love.filesystem.newFileData(module_definition.filename)
+
+
+
+  end
+
+  return fileinfo.size == module.size and love.data.hash("sha256", assert(love.filesystem.newFileData(module.filename))) == module.sha256
+
+end
+
 function class.get_module_definition()
   local key = love.system.getOS() .. "/" .. jit.arch
-  print("key", key)
   return class.module_definitions[love.system.getOS() .. "/" .. jit.arch]
 end
 
 local function new()
   local self = {}
 
-  local module = class.get_module_definition()
-  if module then
-    if class.check(module) then
-      self.module = require "brigid"
-    else
-      love.filesystem.remove(module.filename)
+  local remove = false
+  local module_definition = class.get_module_definition()
+  if module_definition then
+    local filename = module_definition.filename
+    local fileinfo = love.filesystem.getInfo(filename)
+    if fileinfo then
+      remove = true
+      if fileinfo.size == module_definition.size then
+        local data = love.filesystem.newFileData(filename)
+        if data then
+          if love.data.hash("sha256", data) == module_definition.sha256 then
+            remove = false
+          end
+        end
+      end
     end
-  else
-    self.module = require "brigid"
   end
+  if remove then
+    love.filesystem.remove(filename)
+  end
+
+  pcall(function () self.module = require "brigid" end)
 
   if self.module then
     self.state = "loaded"
