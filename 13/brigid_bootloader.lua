@@ -96,10 +96,15 @@ end
 function class:update()
   if self.state == "loading" then
     local channel = love.thread.getChannel "brigid_bootloader"
-    local message = channel:pop()
-    if message then
+    while true do
+      local message = channel:pop()
+      if not message then
+        break
+      end
       if message == "ok" then
-        self.module = require "brigid"
+        pcall(function () self.module = require "brigid" end)
+      end
+      if self.module then
         self.state = "loaded"
       else
         self.state = "error"
