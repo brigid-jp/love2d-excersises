@@ -9,10 +9,7 @@ local love = {
   thread = require "love.thread";
 }
 
-local class = {}
-local metatable = { __index = class }
-
-class.module_definitions = {
+local module_definitions = {
   ["OS X/x64"] = {
     url = "http://brigid.jp/pub/brigid-1.4-osx-x64.so";
     size = 160744;
@@ -33,52 +30,35 @@ class.module_definitions = {
   };
 }
 
-function class.check(module)
-  local fileinfo = love.filesystem.getInfo(module.filename)
-  if fileinfo then
-    return fileinfo.size == module.size and love.data.hash("sha256", assert(love.filesystem.newFileData(module.filename))) == module.sha256
-  end
-end
-
-function class.check_module(fileinfo, module_definition)
-  if fileinfo.size == module_definition.size then
-    local data = love.filesystem.newFileData(module_definition.filename)
-
-
-
-  end
-
-  return fileinfo.size == module.size and love.data.hash("sha256", assert(love.filesystem.newFileData(module.filename))) == module.sha256
-
-end
+local class = {}
+local metatable = { __index = class }
 
 function class.get_module_definition()
   local key = love.system.getOS() .. "/" .. jit.arch
-  return class.module_definitions[love.system.getOS() .. "/" .. jit.arch]
+  return module_definitions[key]
+end
+
+function class.check(fileinfo, module_definition)
+  if fileinfo.size == module_definition.size then
+    local data = love.filesystem.newFileData(module_definition.filename)
+    if data then
+      return love.data.hash("sha256", data) == module_definition.sha256
+    end
+  end
 end
 
 local function new()
   local self = {}
 
-  local remove = false
   local module_definition = class.get_module_definition()
   if module_definition then
     local filename = module_definition.filename
     local fileinfo = love.filesystem.getInfo(filename)
     if fileinfo then
-      remove = true
-      if fileinfo.size == module_definition.size then
-        local data = love.filesystem.newFileData(filename)
-        if data then
-          if love.data.hash("sha256", data) == module_definition.sha256 then
-            remove = false
-          end
-        end
+      if not class.check(fileinfo, module_definition) then
+        love.filesystem.remove(filename)
       end
     end
-  end
-  if remove then
-    love.filesystem.remove(filename)
   end
 
   pcall(function () self.module = require "brigid" end)
@@ -101,6 +81,7 @@ function class:update()
       if not message then
         break
       end
+      print(message)
       if message == "ok" then
         pcall(function () self.module = require "brigid" end)
       end
