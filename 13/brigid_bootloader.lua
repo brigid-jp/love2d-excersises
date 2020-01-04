@@ -9,7 +9,7 @@ local love = {
   thread = require "love.thread";
 }
 
-local modules = {
+local module_informations = {
   ["OS X"] = {
     x64 = {
       url = "http://brigid.jp/pub/brigid-1.4-osx-x64.so";
@@ -38,7 +38,7 @@ local class = {}
 local metatable = { __index = class }
 
 function class.get_module()
-  local module = modules[love.system.getOS()]
+  local module = module_informations[love.system.getOS()]
   if module then
     return module[jit.arch]
   end
