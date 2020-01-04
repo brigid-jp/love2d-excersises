@@ -12,23 +12,27 @@ local brigid_bootloader = require "brigid_bootloader"
 
 local channel = love.thread.getChannel "brigid_bootloader"
 
-local module_definition = brigid_bootloader.get_module_definition()
-if not module_definition then
-  channel:push "error"
-  return
+local module = brigid_bootloader.get_module()
+if not module then
+  return channel:push {
+    result = "error";
+    message = "no module";
+  }
 end
 
-local filename = module_definition.filename
-local file = love.filesystem.newFile(filename, "w")
+local filename = module.filename
+local file, message = love.filesystem.newFile(filename, "w")
 if not file then
-  channel:push "error"
-  return
+  return channel:push {
+    result = "error";
+    message = "cannot newFile: " .. message;
+  }
 end
 
 local result, code, header
 pcall(function ()
   result, code, header = http.request {
-    url = module_definition.url;
+    url = module.url;
     sink = function (chunk, e)
       if chunk then
         file:write(chunk)
@@ -42,9 +46,9 @@ end)
 file:close()
 
 local fileinfo = love.filesystem.getInfo(filename)
-if result and code == 200 and fileinfo and brigid_bootloader.check(fileinfo, module_definition) then
+if result and code == 200 and fileinfo and brigid_bootloader.check(fileinfo, module) then
   channel:push "ok"
 else
-  love.filesystem.remove(module_definition.filename)
+  love.filesystem.remove(module.filename)
   channel:push "error"
 end
