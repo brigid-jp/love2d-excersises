@@ -11,13 +11,17 @@ function love.load()
 end
 
 function love.update(dt)
-  if not brigid then
-    if bootloader:update() == "loaded" then
+  if brigid == nil then
+    bootloader:update()
+    if bootloader.state == "loaded" then
       brigid = bootloader.module
+    elseif bootloader.state == "error" then
+      brigid = false
     end
+    text[1] = "brigid " .. bootloader.state .. "\n"
   end
-  if brigid then
-    text[1] = "brigid version " .. brigid.get_version() .. "\n"
+  if type(brigid) == "table" then
+    text[2] = "brigid version " .. brigid.get_version() .. "\n"
   end
 end
 

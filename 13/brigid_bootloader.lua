@@ -54,29 +54,10 @@ function class.check(fileinfo, module)
 end
 
 local function new()
-  local self = {}
-
-  local module = class.get_module()
-  if module then
-    local filename = module.filename
-    local fileinfo = love.filesystem.getInfo(filename)
-    if fileinfo then
-      if not class.check(fileinfo, module) then
-        love.filesystem.remove(filename)
-      end
-    end
-  end
-
-  pcall(function () self.module = require "brigid" end)
-
-  if self.module then
-    self.state = "loaded"
-  else
-    self.state = "loading"
-    love.thread.newThread "brigid_bootloader_thread.lua" :start()
-  end
-
-  return self
+  love.thread.newThread "brigid_bootloader_thread.lua" :start()
+  return {
+    state = "loading";
+  }
 end
 
 function class:update()
@@ -87,10 +68,10 @@ function class:update()
       if not message then
         break
       end
-      print(message)
-      if message == "ok" then
+      if message.result == "ok" then
         pcall(function () self.module = require "brigid" end)
       end
+      print(message.result, message.message)
       if self.module then
         self.state = "loaded"
       else
