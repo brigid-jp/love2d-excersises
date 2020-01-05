@@ -38,7 +38,10 @@ local module_informations = {
 local function get_module_information()
   local system = module_informations[love.system.getOS()]
   if system then
-    return system[jit.arch]
+    local arch = system[jit.arch]
+    if arch then
+      return arch, arch.filename
+    end
   end
 end
 
@@ -48,12 +51,7 @@ local function check(module_info, fileinfo)
   end
 end
 
-local channel = love.thread.getChannel "brigid_bootloader"
-local module_info = get_module_information()
-local module_filename
-if module_info then
-  module_filename = module_info.filename
-end
+local module_info, module_filename = get_module_information()
 
 local result, message = pcall(function ()
   if module_info then
@@ -93,6 +91,7 @@ local result, message = pcall(function ()
   require "brigid"
 end)
 
+local channel = love.thread.getChannel "brigid_bootloader"
 if result then
   channel:push { result = "ok" }
 else
