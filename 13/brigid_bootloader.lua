@@ -3,9 +3,6 @@
 -- https://opensource.org/licenses/mit-license.php
 
 local love = {
-  data = require "love.data";
-  filesystem = require "love.filesystem";
-  system = require "love.system";
   thread = require "love.thread";
 }
 
