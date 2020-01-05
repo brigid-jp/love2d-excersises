@@ -50,28 +50,28 @@ end
 
 local channel = love.thread.getChannel "brigid_bootloader"
 local module_info = get_module_information()
-local filename
+local module_filename
+if module_info then
+  module_filename = module_info.filename
+end
 
 local result, message = pcall(function ()
   if module_info then
-    filename = module_info.filename
-    local fileinfo = love.filesystem.getInfo(filename)
+    local fileinfo = love.filesystem.getInfo(module_filename)
     if fileinfo then
       if not check(module_info, fileinfo) then
-        love.filesystem.remove(filename)
+        love.filesystem.remove(module_filename)
       end
     end
   end
 
-  local module
-  pcall(function () module = require "brigid" end)
-  if module then
+  if pcall(function () require "brigid" end) then
     return
   end
 
-  assert(module_info)
+  assert(module_info, "module information not found")
 
-  local file = assert(love.filesystem.newFile(filename, "w"))
+  local file = assert(love.filesystem.newFile(module_filename, "w"))
   local result, message = pcall(function ()
     local _, code = http.request {
       url = module_info.url;
@@ -84,73 +84,20 @@ local result, message = pcall(function ()
         return true
       end;
     }
-    assert(code == 200)
+    assert(code == 200, "http error")
   end)
   file:close()
   assert(result, message)
 
-  assert(check(module_info, assert(love.filesystem.getInfo(filename))))
+  assert(check(module_info, assert(love.filesystem.getInfo(module_filename))), "file error")
   require "brigid"
 end)
 
 if result then
-  channel:push {
-    result = "ok";
-  }
+  channel:push { result = "ok" }
 else
-  if filename then
-    love.filesystem.remove(filename)
+  if module_filename then
+    love.filesystem.remove(module_filename)
   end
-  channel:push {
-    result = "error";
-    message = message;
-  }
+  channel:push { result = "error", message = message }
 end
-
---[====[
-
-local brigid_bootloader = require "brigid_bootloader"
-
-local channel = love.thread.getChannel "brigid_bootloader"
-
-local module = brigid_bootloader.get_module()
-if not module then
-  return channel:push {
-    result = "error";
-    message = "no module";
-  }
-end
-
-local filename = module.filename
-local file, message = love.filesystem.newFile(filename, "w")
-if not file then
-  return channel:push {
-    result = "error";
-    message = "cannot newFile: " .. message;
-  }
-end
-
-local result, code, header
-pcall(function ()
-  result, code, header = http.request {
-    url = module.url;
-    sink = function (chunk, e)
-      if chunk then
-        file:write(chunk)
-      elseif e then
-        error(e)
-      end
-      return true
-    end;
-  }
-end)
-file:close()
-
-local fileinfo = love.filesystem.getInfo(filename)
-if result and code == 200 and fileinfo and brigid_bootloader.check(fileinfo, module) then
-  channel:push "ok"
-else
-  love.filesystem.remove(module.filename)
-  channel:push "error"
-end
-]====]
