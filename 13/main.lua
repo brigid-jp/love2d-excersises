@@ -30,7 +30,7 @@ function love.update(dt)
       local thread = love.thread.newThread "brigid_downloader_thread.lua"
       thread:start(
         "https://brigid.jp/pub/mplus-TESTFLIGHT-063a/mplus-1mn-light.ttf",
-        "mplus-1mn-light.ttf"
+        love.filesystem.getSaveDirectory() .. "/mplus-1mn-light.ttf"
       )
     end
   end
