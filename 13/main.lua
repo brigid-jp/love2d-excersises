@@ -2,6 +2,7 @@ local brigid_bootloader = require "brigid_bootloader"
 
 local brigid
 local bootloader
+local downloader
 local text = {
   "brigid loading...\n"
 }
@@ -21,6 +22,16 @@ function love.update(dt)
       brigid = false
       text[1] = "brigid load error\n"
       text[2] = bootloader.message .. "\n"
+    end
+  end
+  if type(brigid) == "table" then
+    if text[3] == nil then
+      text[3] = "loading font...\n"
+      local thread = love.thread.newThread "brigid_downloader_thread.lua"
+      thread:start(
+        "https://brigid.jp/pub/mplus-TESTFLIGHT-063a/mplus-1mn-light.ttf",
+        "mplus-1mn-light.ttf"
+      )
     end
   end
 end
