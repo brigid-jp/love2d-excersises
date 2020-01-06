@@ -54,7 +54,7 @@ end
 local module_info, module_filename = get_module_information()
 
 local result, message = pcall(function ()
-  if module_info then
+  if module_info and module_filename then
     local fileinfo = love.filesystem.getInfo(module_filename)
     if fileinfo then
       if not check(module_info, fileinfo) then
@@ -67,7 +67,7 @@ local result, message = pcall(function ()
     return
   end
 
-  assert(module_info, "module information not found")
+  assert(module_info)
 
   local file = assert(love.filesystem.newFile(module_filename, "w"))
   local result, message = pcall(function ()
@@ -82,12 +82,12 @@ local result, message = pcall(function ()
         return true
       end;
     }
-    assert(code == 200, "http error")
+    assert(code == 200)
   end)
   file:close()
   assert(result, message)
 
-  assert(check(module_info, assert(love.filesystem.getInfo(module_filename))), "file error")
+  assert(check(module_info, assert(love.filesystem.getInfo(module_filename))))
   require "brigid"
 end)
 
