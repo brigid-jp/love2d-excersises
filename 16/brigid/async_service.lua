@@ -16,7 +16,7 @@ local function new_worker(self)
   local worker_id = self.worker_id + 1
   self.worker_id = worker_id
 
-  local thread = love.thread.newThread "brigid/async_worker.lua"
+  local thread = love.thread.newThread "brigid/async_worker_thread.lua"
   local send_channel = love.thread.newChannel()
 
   local worker = {
