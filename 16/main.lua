@@ -3,23 +3,23 @@
 -- https://opensource.org/licenses/mit-license.php
 
 local b = {
-  thread_pool = require "brigid.thread_pool";
+  async_service = require "brigid.async_service";
 }
 
 local g = love.graphics
 
-local thread_pool
+local async_service
 
 function love.load()
-  thread_pool = b.thread_pool(2)
-  -- print(thread_pool.max_threads)
-  -- print(thread_pool.max_spare_threads)
-  -- print(thread_pool.spare_threads)
+  async_service = b.async_service(2)
+  -- print(async_service.max_threads)
+  -- print(async_service.max_spare_threads)
+  -- print(async_service.spare_threads)
 end
 
 function love.update(dt)
-  if thread_pool then
-    thread_pool:update()
+  if async_service then
+    async_service:update()
   end
 end
 
@@ -30,6 +30,6 @@ end
 function love.keyreleased(key)
   print("keyreleased", key)
   if key == "s" then
-    thread_pool:push { "sleep", 2 }
+    async_service:push { "sleep", 2 }
   end
 end
