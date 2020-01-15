@@ -12,17 +12,16 @@ local thread_id, recv_channel, send_channel = ...
 while true do
   local recv = recv_channel:demand()
   if recv then
-    print("recv", thread_id, recv)
-    if recv == "stop" then
+    local req = recv[1]
+    if req == "quit" then
       break
-    elseif recv[1] == "sleep" then
-      print("sleeping", thread_id)
+    elseif req == "sleep" then
+      print(thread_id, "sleeping")
       love.timer.sleep(recv[2])
-      print("slept", thread_id)
+      print(thread_id, "slept")
     end
-    send_channel:push "ok"
-  else
-    print("timeout", thread_id)
+    send_channel:push { "success", thread_id }
   end
 end
-print("exit", thread_id)
+
+send_channel:push { "quit", thread_id }

@@ -18,6 +18,9 @@ function love.load()
 end
 
 function love.update(dt)
+  if thread_pool then
+    thread_pool:update()
+  end
 end
 
 function love.draw()
@@ -26,13 +29,7 @@ end
 
 function love.keyreleased(key)
   print("keyreleased", key)
-  if key == "q" then
-    thread_pool:stop_all()
-  elseif key == "s" then
-    thread_pool:sleep(1, 1)
-  elseif key == "t" then
-    thread_pool:sleep(2, 1)
-  elseif key == "w" then
-    thread_pool:wait_all()
+  if key == "s" then
+    thread_pool:push { "sleep", 2 }
   end
 end
