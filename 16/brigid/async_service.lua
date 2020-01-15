@@ -33,27 +33,6 @@ local function new_worker(self)
   return worker_id, worker
 end
 
-local function peek_task(self)
-  local pending_tasks = self.pending_tasks
-  local m = pending_tasks.m
-  local n = pending_tasks.n
-  if m <= n then
-    return pending_tasks[m]
-  end
-end
-
-local function pop_task(self)
-  local pending_tasks = self.pending_tasks
-  local m = pending_tasks.m
-  local n = pending_tasks.n
-  if m <= n then
-    local task = pending_tasks[m]
-    pending_tasks[m] = nil
-    pending_tasks.m = m + 1
-    return task
-  end
-end
-
 local function send_tasks(self)
   local idle_workers = self.idle_workers
   local active_workers = self.active_workers
