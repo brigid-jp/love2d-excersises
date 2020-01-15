@@ -15,8 +15,6 @@ local function new_idle_thread(self)
   local thread = love.thread.newThread "brigid/thread.lua"
   local send_channel = love.thread.newChannel()
 
-  print("new_idle_thread", thread_id)
-
   local thread_info = {
     thread = thread;
     send_channel = send_channel;
@@ -44,7 +42,7 @@ local function new(start_threads, max_threads, max_spare_threads)
 
   local self = {
     thread_id = 0;
-    threads = {};
+    active_threads = {};
     idle_threads = {};
     recv_channel = love.thread.newChannel();
     max_threads = max_threads;
@@ -72,8 +70,8 @@ function class:update()
       -- save result
       local thread_id = recv[2]
       print("success", thread_id)
-      self.idle_threads[thread_id] = self.threads[thread_id]
-      self.threads[thread_id] = nil
+      self.idle_threads[thread_id] = self.active_threads[thread_id]
+      self.active_threads[thread_id] = nil
       self.spare_threads = self.spare_threads + 1
     end
 
@@ -92,7 +90,7 @@ function class:push(task)
     thread_id, thread_info = new_idle_thread(self)
   end
   idle_threads[thread_id] = nil
-  self.threads[thread_id] = thread_info
+  self.active_threads[thread_id] = thread_info
   self.spare_threads = self.spare_threads - 1
 
   thread_info.send_channel:push(task)
