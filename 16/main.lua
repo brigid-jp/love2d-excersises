@@ -33,6 +33,6 @@ function love.keyreleased(key)
   print("keyreleased", key)
   id = id + 1
   if key == "s" then
-    async_service:push { "sleep", 2, id }
+    async_service:push("sleep", 2)
   end
 end

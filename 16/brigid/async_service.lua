@@ -12,6 +12,8 @@ local metatable = { __index = class }
 
 local function new_worker(self)
   local worker_id = self.worker_id + 1
+  self.worker_id = worker_id
+
   local thread = love.thread.newThread "brigid/async_worker.lua"
   local send_channel = love.thread.newChannel()
   local worker = {
@@ -19,7 +21,6 @@ local function new_worker(self)
     send_channel = send_channel;
   }
 
-  self.worker_id = worker_id
   self.idle_workers[worker_id] = worker
   self.spare_threads = self.spare_threads + 1
   self.current_threads = self.current_threads + 1
@@ -92,6 +93,7 @@ local function new(start_threads, max_threads, max_spare_threads)
 
   local self = {
     worker_id = 0;
+    task_id = 0;
     recv_channel = love.thread.newChannel();
     idle_workers = {};
     active_workers = {};
@@ -134,8 +136,11 @@ function class:update()
   end
 end
 
-function class:push(task)
-  push_task(self, task)
+function class:push(...)
+  local task_id = self.task_id + 1
+  self.task_id = task_id
+
+  push_task(self, { id = task_id; ... })
   send_tasks(self)
 end
 
