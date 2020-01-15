@@ -27,9 +27,12 @@ function love.draw()
   local x, y, w, h = love.window.getSafeArea()
 end
 
+local id = 0
+
 function love.keyreleased(key)
   print("keyreleased", key)
+  id = id + 1
   if key == "s" then
-    async_service:push { "sleep", 2 }
+    async_service:push { "sleep", 2, id }
   end
 end

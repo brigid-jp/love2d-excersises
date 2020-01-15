@@ -16,9 +16,9 @@ while true do
     if req == "quit" then
       break
     elseif req == "sleep" then
-      print(thread_id, "sleeping")
+      print(thread_id, "sleeping", recv[3])
       love.timer.sleep(recv[2])
-      print(thread_id, "slept")
+      print(thread_id, "slept", recv[3])
     end
     send_channel:push { "success", thread_id }
   end

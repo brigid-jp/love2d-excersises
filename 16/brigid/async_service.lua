@@ -12,10 +12,8 @@ local metatable = { __index = class }
 
 local function new_worker(self)
   local worker_id = self.worker_id + 1
-
   local thread = love.thread.newThread "brigid/async_worker.lua"
   local send_channel = love.thread.newChannel()
-
   local worker = {
     thread = thread;
     send_channel = send_channel;
@@ -27,7 +25,58 @@ local function new_worker(self)
   self.current_threads = self.current_threads + 1
 
   thread:start(worker_id, send_channel, self.recv_channel)
+
   return worker_id, worker
+end
+
+local function push_task(self, task)
+  local tasks = self.tasks
+  local m = tasks.m
+  local n = tasks.n + 1
+  tasks[n] = task
+  tasks.n = n
+end
+
+local function peek_task(self)
+  local tasks = self.tasks
+  local m = tasks.m
+  local n = tasks.n
+  if m <= n then
+    return tasks[m]
+  end
+end
+
+local function pop_task(self)
+  local tasks = self.tasks
+  local m = tasks.m
+  local n = tasks.n
+  if m <= n then
+    local task = tasks[m]
+    tasks[m] = nil
+    tasks.m = m + 1
+    return task
+  end
+end
+
+local function send_tasks(self)
+  local idle_workers = self.idle_workers
+
+  while true do
+    local task = peek_task(self)
+    if not task then
+      break
+    end
+
+    local worker_id, worker = next(idle_workers)
+    if not worker_id then
+      break
+    end
+
+    idle_workers[worker_id] = nil
+    self.active_workers[worker_id] = worker
+    self.spare_threads = self.spare_threads - 1
+    worker.send_channel:push(pop_task(self))
+  end
 end
 
 local function new(start_threads, max_threads, max_spare_threads)
@@ -43,9 +92,10 @@ local function new(start_threads, max_threads, max_spare_threads)
 
   local self = {
     worker_id = 0;
-    active_workers = {};
-    idle_workers = {};
     recv_channel = love.thread.newChannel();
+    idle_workers = {};
+    active_workers = {};
+    tasks = { m = 1; n = 0 };
     max_threads = max_threads;
     max_spare_threads = max_spare_threads;
     spare_threads = 0;
@@ -74,6 +124,7 @@ function class:update()
       self.idle_workers[worker_id] = self.active_workers[worker_id]
       self.active_workers[worker_id] = nil
       self.spare_threads = self.spare_threads + 1
+      send_tasks(self)
     end
 
     -- task/progress
@@ -84,17 +135,8 @@ function class:update()
 end
 
 function class:push(task)
-  local idle_workers = self.idle_workers
-
-  local worker_id, worker = next(idle_workers)
-  if not worker_id then
-    worker_id, worker = new_worker(self)
-  end
-  idle_workers[worker_id] = nil
-  self.active_workers[worker_id] = worker
-  self.spare_threads = self.spare_threads - 1
-
-  worker.send_channel:push(task)
+  push_task(self, task)
+  send_tasks(self)
 end
 
 return setmetatable(class, {
