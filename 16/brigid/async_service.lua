@@ -7,6 +7,8 @@ local love = {
   thread = require "love.thread";
 }
 
+local unpack = table.unpack or unpack
+
 local class = {}
 local metatable = { __index = class }
 
@@ -16,6 +18,7 @@ local function new_worker(self)
 
   local thread = love.thread.newThread "brigid/async_worker.lua"
   local send_channel = love.thread.newChannel()
+
   local worker = {
     thread = thread;
     send_channel = send_channel;
@@ -30,41 +33,36 @@ local function new_worker(self)
   return worker_id, worker
 end
 
-local function push_task(self, task)
-  local tasks = self.tasks
-  local m = tasks.m
-  local n = tasks.n + 1
-  tasks[n] = task
-  tasks.n = n
-end
-
 local function peek_task(self)
-  local tasks = self.tasks
-  local m = tasks.m
-  local n = tasks.n
+  local pending_tasks = self.pending_tasks
+  local m = pending_tasks.m
+  local n = pending_tasks.n
   if m <= n then
-    return tasks[m]
+    return pending_tasks[m]
   end
 end
 
 local function pop_task(self)
-  local tasks = self.tasks
-  local m = tasks.m
-  local n = tasks.n
+  local pending_tasks = self.pending_tasks
+  local m = pending_tasks.m
+  local n = pending_tasks.n
   if m <= n then
-    local task = tasks[m]
-    tasks[m] = nil
-    tasks.m = m + 1
+    local task = pending_tasks[m]
+    pending_tasks[m] = nil
+    pending_tasks.m = m + 1
     return task
   end
 end
 
 local function send_tasks(self)
   local idle_workers = self.idle_workers
+  local active_workers = self.active_workers
+  local pending_tasks = self.pending_tasks
 
   while true do
-    local task = peek_task(self)
-    if not task then
+    local m = pending_tasks.m
+    local n = pending_tasks.n
+    if m > n then
       break
     end
 
@@ -73,10 +71,18 @@ local function send_tasks(self)
       break
     end
 
+    local task = pending_tasks[m]
+    pending_tasks.m = m + 1
+    pending_tasks[m] = nil
+
+    task.status = "running"
+    task.worker_id = worker_id
+
     idle_workers[worker_id] = nil
-    self.active_workers[worker_id] = worker
+    active_workers[worker_id] = worker
     self.spare_threads = self.spare_threads - 1
-    worker.send_channel:push(pop_task(self))
+
+    worker.send_channel:push { "task", task.task_id, unpack(task) }
   end
 end
 
@@ -97,7 +103,8 @@ local function new(start_threads, max_threads, max_spare_threads)
     recv_channel = love.thread.newChannel();
     idle_workers = {};
     active_workers = {};
-    tasks = { m = 1; n = 0 };
+    pending_tasks = { m = 1; n = 0 };
+    tasks = {};
     max_threads = max_threads;
     max_spare_threads = max_spare_threads;
     spare_threads = 0;
@@ -122,7 +129,8 @@ function class:update()
     if req == "success" then
       -- save result
       local worker_id = recv[2]
-      print("success", worker_id)
+      local task_id = recv[3]
+      print("success", worker_id, task_id)
       self.idle_workers[worker_id] = self.active_workers[worker_id]
       self.active_workers[worker_id] = nil
       self.spare_threads = self.spare_threads + 1
@@ -137,10 +145,26 @@ function class:update()
 end
 
 function class:push(...)
+  -- generate task id
   local task_id = self.task_id + 1
   self.task_id = task_id
 
-  push_task(self, { id = task_id; ... })
+  -- create task
+  local task = {
+    task_id = task_id;
+    status = "pending";
+    ...
+  }
+  self.tasks[task_id] = task
+
+  -- push pending task
+  local pending_tasks = self.pending_tasks
+  local m = pending_tasks.m
+  local n = pending_tasks.n + 1
+  pending_tasks.n = n
+  pending_tasks[n] = task
+
+  -- send tasks
   send_tasks(self)
 end
 
