@@ -11,7 +11,7 @@ local g = love.graphics
 local async_service
 
 function love.load()
-  async_service = b.async_service(2)
+  async_service = b.async_service(0, 4, 2)
   -- print(async_service.max_threads)
   -- print(async_service.max_spare_threads)
   -- print(async_service.spare_threads)

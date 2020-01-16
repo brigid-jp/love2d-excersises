@@ -9,7 +9,7 @@ local love = {
 
 local unpack = table.unpack or unpack
 
-local thread_id, recv_channel, send_channel = ...
+local worker_id, recv_channel, send_channel = ...
 
 while true do
   local recv = recv_channel:demand()
@@ -22,13 +22,13 @@ while true do
       local task_id = recv[2]
       local command = recv[3]
       if command == "sleep" then
-        print(thread_id, "sleeping", task_id)
+        print("sleeping", "worker_id:" .. worker_id, "task_id:" .. task_id)
         love.timer.sleep(recv[4])
-        print(thread_id, "slept", task_id)
+        print("slept", "worker_id:" .. worker_id, "task_id:" .. task_id)
       end
-      send_channel:push { "success", thread_id }
+      send_channel:push { "success", worker_id, task_id }
     end
   end
 end
 
-send_channel:push { "quit", thread_id }
+send_channel:push { "quit", worker_id }
