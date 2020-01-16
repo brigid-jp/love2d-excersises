@@ -167,18 +167,20 @@ function class:update()
 
     if req == "progress" then
       local task_id = recv[3]
+      local id
       local now = recv[4]
       local max = recv[5]
-      -- print("progress", "worker_id:" .. worker_id, "task_id:" .. task_id, now/max*100 .. "%")
     elseif req == "success" then
       local task_id = recv[3]
       print("success", "worker_id:" .. worker_id, "task_id:" .. task_id)
       local worker = workers[worker_id]
       worker.status = "idle"
       worker_queue:push(workers[worker_id])
+
       local task = tasks[task_id]
       task.status = "success"
       task.intr_channel = nil
+
       run(self)
     elseif req == "failure" then
       local task_id = recv[3]
