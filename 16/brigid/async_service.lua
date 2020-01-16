@@ -64,7 +64,6 @@ local function new_worker(self)
     status = "idle";
   }
   self.workers[worker_id] = worker
-  self.worker_queue:push(worker)
   self.worker_count = self.worker_count + 1
 
   thread:start(worker_id, send_channel, self.recv_channel, intr_channel)
@@ -82,40 +81,9 @@ local function new_task(self, ...)
     ...
   }
   self.tasks[task_id] = task
-  self.task_queue:push(task)
 
   return task
 end
-
-local function run(self)
-  local worker_queue = self.worker_queue
-  local task_queue = self.task_queue
-
-  while true do
-    if task_queue:empty() then
-      break
-    end
-
-    if worker_queue:empty() then
-      if self.worker_count < self.max_workers then
-        new_worker(self)
-      else
-        break
-      end
-    end
-    local worker = worker_queue:pop()
-    worker.status = "active"
-
-    local task = task_queue:pop()
-    task.intr_channel = worker.intr_channel
-    task.status = "running"
-
-    worker.send_channel:push { "task", task.id, unpack(task) }
-  end
-end
-
-local class = {}
-local metatable = { __index = class }
 
 local function new(start_workers, max_workers, max_spare_workers)
   if not start_workers then
@@ -128,6 +96,7 @@ local function new(start_workers, max_workers, max_spare_workers)
     max_spare_workers = max_workers
   end
 
+  local worker_queue = queue()
   local self = {
     max_workers = max_workers;
     max_spare_workers = max_spare_workers;
@@ -135,7 +104,7 @@ local function new(start_workers, max_workers, max_spare_workers)
     recv_channel = love.thread.newChannel();
     worker_id = 0;
     workers = {};
-    worker_queue = queue();
+    worker_queue = worker_queue;
     worker_count = 0;
 
     task_id = 0;
@@ -144,10 +113,53 @@ local function new(start_workers, max_workers, max_spare_workers)
   }
 
   for i = 1, start_workers do
-    new_worker(self)
+    worker_queue:push(new_worker(self))
   end
 
   return self
+end
+
+local function run(self)
+  local worker_queue = self.worker_queue
+  local task_queue = self.task_queue
+
+  while true do
+    if task_queue:empty() then
+      break
+    end
+
+    local worker = worker_queue:pop()
+    if not worker then
+      if self.worker_count < self.max_workers then
+        worker = new_worker(self)
+      else
+        break
+      end
+    end
+    worker.status = "active"
+
+    local task = task_queue:pop()
+    task.status = "running"
+    task.worker = worker
+
+    worker.send_channel:push { "task", task.id, unpack(task) }
+  end
+end
+
+local class = {}
+local metatable = { __index = class }
+
+function class:push(...)
+  local task = new_task(self, ...)
+  self.task_queue:push(task)
+  run(self)
+  return task
+end
+
+function class:cancel(task)
+  if task.status == "running" then
+    task.worker.intr_channel:push { "cancel" }
+  end
 end
 
 function class:update()
@@ -179,7 +191,7 @@ function class:update()
 
       local task = tasks[task_id]
       task.status = "success"
-      task.intr_channel = nil
+      task.worker.intr_channel = nil
 
       run(self)
     elseif req == "failure" then
@@ -190,7 +202,7 @@ function class:update()
       worker_queue:push(workers[worker_id])
       local task = tasks[task_id]
       task.status = "failure"
-      task.intr_channel = nil
+      task.worker.intr_channel = nil
       run(self)
     elseif req == "quit" then
       print("quit", "worker_id:" .. worker_id)
@@ -206,20 +218,6 @@ function class:update()
       local worker = worker_queue:pop()
       worker.send_channel:push { "quit" }
     end
-  end
-end
-
-function class:push(...)
-  local task = new_task(self, ...)
-  print("push", "task_id:" .. task.id)
-  run(self)
-  return task
-end
-
-function class:cancel(task)
-  local task = self.tasks[task.id]
-  if task.status == "running" then
-    task.intr_channel:push { "cancel" }
   end
 end
 
