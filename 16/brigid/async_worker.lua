@@ -9,12 +9,12 @@ local love = {
 
 local unpack = table.unpack or unpack
 
-local worker_id, recv_channel, send_channel, task_channel = ...
+local worker_id, recv_channel, send_channel, intr_channel = ...
 
 local function task_sleep(task_id, s)
   local n = 10
   for i = 1, n do
-    local recv = task_channel:pop()
+    local recv = intr_channel:pop()
     if recv then
       -- cancel
       error "canceled"

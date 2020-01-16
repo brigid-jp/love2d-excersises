@@ -54,20 +54,20 @@ local function new_worker(self)
 
   local thread = love.thread.newThread "brigid/async_worker.lua"
   local send_channel = love.thread.newChannel()
-  local task_channel = love.thread.newChannel()
+  local intr_channel = love.thread.newChannel()
 
   local worker = {
     id = worker_id;
     thread = thread;
     send_channel = send_channel;
-    task_channel = task_channel;
+    intr_channel = intr_channel;
     status = "idle";
   }
   self.workers[worker_id] = worker
   self.worker_queue:push(worker)
   self.worker_count = self.worker_count + 1
 
-  thread:start(worker_id, send_channel, self.recv_channel, task_channel)
+  thread:start(worker_id, send_channel, self.recv_channel, intr_channel)
 
   return worker
 end
@@ -107,7 +107,7 @@ local function run(self)
     worker.status = "active"
 
     local task = task_queue:pop()
-    task.channel = worker.task_channel
+    task.intr_channel = worker.intr_channel
     task.status = "running"
 
     worker.send_channel:push { "task", task.id, unpack(task) }
@@ -178,7 +178,7 @@ function class:update()
       worker_queue:push(workers[worker_id])
       local task = tasks[task_id]
       task.status = "success"
-      task.channel = nil
+      task.intr_channel = nil
       run(self)
     elseif req == "failure" then
       local task_id = recv[3]
@@ -188,7 +188,7 @@ function class:update()
       worker_queue:push(workers[worker_id])
       local task = tasks[task_id]
       task.status = "failure"
-      task.channel = nil
+      task.intr_channel = nil
       run(self)
     elseif req == "quit" then
       print("quit", "worker_id:" .. worker_id)
@@ -217,7 +217,7 @@ end
 function class:cancel(task)
   local task = self.tasks[task.id]
   if task.status == "running" then
-    task.channel:push { "cancel" }
+    task.intr_channel:push { "cancel" }
   end
 end
 
