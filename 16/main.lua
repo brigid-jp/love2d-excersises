@@ -11,7 +11,7 @@ local g = love.graphics
 local async_service
 
 function love.load()
-  async_service = b.async_service(0, 4, 2)
+  async_service = b.async_service(0, 1, 2)
   -- print(async_service.max_threads)
   -- print(async_service.max_spare_threads)
   -- print(async_service.spare_threads)
@@ -27,12 +27,21 @@ function love.draw()
   local x, y, w, h = love.window.getSafeArea()
 end
 
-local id = 0
+local task
 
 function love.keyreleased(key)
   print("keyreleased", key)
-  id = id + 1
   if key == "s" then
-    async_service:push("sleep", 2)
+    task = async_service:push("sleep", 2)
+  elseif key == "p" then
+    if task then
+      print(task.status)
+      -- async_service:cancel(task)
+    end
+  elseif key == "c" then
+    if task then
+      print(task.status)
+      async_service:cancel(task)
+    end
   end
 end

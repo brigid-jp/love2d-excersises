@@ -54,18 +54,20 @@ local function new_worker(self)
 
   local thread = love.thread.newThread "brigid/async_worker.lua"
   local send_channel = love.thread.newChannel()
+  local task_channel = love.thread.newChannel()
 
   local worker = {
     id = worker_id;
     thread = thread;
     send_channel = send_channel;
+    task_channel = task_channel;
     status = "idle";
   }
   self.workers[worker_id] = worker
   self.worker_queue:push(worker)
   self.worker_count = self.worker_count + 1
 
-  thread:start(worker_id, send_channel, self.recv_channel)
+  thread:start(worker_id, send_channel, self.recv_channel, task_channel)
 
   return worker
 end
@@ -105,6 +107,7 @@ local function run(self)
     worker.status = "active"
 
     local task = task_queue:pop()
+    task.channel = worker.task_channel
     task.status = "running"
 
     worker.send_channel:push { "task", task.id, unpack(task) }
@@ -151,6 +154,7 @@ function class:update()
   local recv_channel = self.recv_channel
   local workers = self.workers
   local worker_queue = self.worker_queue
+  local tasks = self.tasks
   local task_queue = self.task_queue
 
   while true do
@@ -161,19 +165,36 @@ function class:update()
     local req = recv[1]
     local worker_id = recv[2]
 
-    if req == "success" then
+    if req == "progress" then
+      local task_id = recv[3]
+      local now = recv[4]
+      local max = recv[5]
+      -- print("progress", "worker_id:" .. worker_id, "task_id:" .. task_id, now/max*100 .. "%")
+    elseif req == "success" then
       local task_id = recv[3]
       print("success", "worker_id:" .. worker_id, "task_id:" .. task_id)
       local worker = workers[worker_id]
       worker.status = "idle"
       worker_queue:push(workers[worker_id])
+      local task = tasks[task_id]
+      task.status = "success"
+      task.channel = nil
+      run(self)
+    elseif req == "failure" then
+      local task_id = recv[3]
+      print("failure", "worker_id:" .. worker_id, "task_id:" .. task_id, recv[4])
+      local worker = workers[worker_id]
+      worker.status = "idle"
+      worker_queue:push(workers[worker_id])
+      local task = tasks[task_id]
+      task.status = "failure"
+      task.channel = nil
       run(self)
     elseif req == "quit" then
       print("quit", "worker_id:" .. worker_id)
       local worker = workers[worker_id]
       workers[worker_id] = nil
       self.worker_count = self.worker_count - 1
-
       worker.thread:wait()
     end
   end
@@ -191,6 +212,13 @@ function class:push(...)
   print("push", "task_id:" .. task.id)
   run(self)
   return task
+end
+
+function class:cancel(task)
+  local task = self.tasks[task.id]
+  if task.status == "running" then
+    task.channel:push { "cancel" }
+  end
 end
 
 return setmetatable(class, {
