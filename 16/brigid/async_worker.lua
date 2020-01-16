@@ -14,38 +14,50 @@ local worker_id, recv_channel, send_channel, intr_channel = ...
 local function task_sleep(task_id, s)
   local n = 10
   for i = 1, n do
-    local recv = intr_channel:pop()
-    if recv then
-      -- cancel
+    local msg = intr_channel:pop()
+    if msg then
       error "canceled"
     end
     love.timer.sleep(s / n)
-    send_channel:push { "progress", worker_id, task_id, i, n }
+    send_channel:push {
+      worker_id = worker_id;
+      task_id = task_id;
+      "progress", i, n;
+    }
   end
+  return 42
 end
 
 while true do
-  local recv = recv_channel:demand()
-  if recv then
-    local req = recv[1]
-    if req == "quit" then
+  local msg = recv_channel:demand()
+  if msg then
+    local method = msg[1]
+    if method == "quit" then
       break
-    elseif req == "task" then
-      -- task block
-      local task_id = recv[2]
-      local command = recv[3]
+    elseif method == "task" then
+      local task_id = msg.task_id
+      local command = msg[2]
       if command == "sleep" then
-        print("sleeping", "worker_id:" .. worker_id, "task_id:" .. task_id)
-        local result, message = pcall(task_sleep, task_id, recv[4])
-        if result then
-          send_channel:push { "success", worker_id, task_id }
+        print(worker_id, task_id)
+        print(("[sleep start] worker_id:%d task_id:%d"):format(worker_id, task_id))
+        local result = {
+          worker_id = worker_id;
+          task_id = task_id;
+          pcall(task_sleep, task_id, msg[3]);
+        }
+        print(("[sleep done] worker_id:%d task_id:%d"):format(worker_id, task_id))
+        if result[1] then
+          result[1] = "success"
         else
-          send_channel:push { "failure", worker_id, task_id, message }
+          result[1] = "failure"
         end
-        print("slept", "worker_id:" .. worker_id, "task_id:" .. task_id)
+        send_channel:push(result)
       end
     end
   end
 end
 
-send_channel:push { "quit", worker_id }
+send_channel:push {
+  worker_id = worker_id;
+  "quit";
+}

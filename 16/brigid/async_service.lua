@@ -57,7 +57,7 @@ local function new_worker(self)
   local intr_channel = love.thread.newChannel()
 
   local worker = {
-    id = worker_id;
+    worker_id = worker_id;
     thread = thread;
     send_channel = send_channel;
     intr_channel = intr_channel;
@@ -76,7 +76,7 @@ local function new_task(self, ...)
   self.task_id = task_id
 
   local task = {
-    id = task_id;
+    task_id = task_id;
     status = "pending";
     ...
   }
@@ -110,6 +110,7 @@ local function new(start_workers, max_workers, max_spare_workers)
     task_id = 0;
     tasks = {};
     task_queue = queue();
+    task_count = 0;
   }
 
   for i = 1, start_workers do
@@ -137,12 +138,16 @@ local function run(self)
       end
     end
     worker.status = "active"
+    local worker_id = worker.worker_id
 
     local task = task_queue:pop()
     task.status = "running"
-    task.worker = worker
+    task.worker_id = worker_id
 
-    worker.send_channel:push { "task", task.id, unpack(task) }
+    worker.send_channel:push {
+      task_id = task.task_id;
+      "task", unpack(task);
+    }
   end
 end
 
@@ -158,7 +163,11 @@ end
 
 function class:cancel(task)
   if task.status == "running" then
-    task.worker.intr_channel:push { "cancel" }
+    local worker_id = task.worker_id
+    if worker_id then
+      local worker = self.workers[worker_id]
+      worker.intr_channel:push { "cancel" }
+    end
   end
 end
 
@@ -170,46 +179,31 @@ function class:update()
   local task_queue = self.task_queue
 
   while true do
-    local recv = recv_channel:pop()
-    if not recv then
+    local msg = recv_channel:pop()
+    if not msg then
       break
     end
-    local req = recv[1]
-    local worker_id = recv[2]
-
-    if req == "progress" then
-      local task_id = recv[3]
-      local id
-      local now = recv[4]
-      local max = recv[5]
-    elseif req == "success" then
-      local task_id = recv[3]
-      print("success", "worker_id:" .. worker_id, "task_id:" .. task_id)
-      local worker = workers[worker_id]
+    local status = msg[1]
+    if status == "success" or status == "failure" then
+      local worker = workers[msg.worker_id]
       worker.status = "idle"
-      worker_queue:push(workers[worker_id])
+      worker_queue:push(worker)
 
-      local task = tasks[task_id]
-      task.status = "success"
-      task.worker.intr_channel = nil
-
-      run(self)
-    elseif req == "failure" then
-      local task_id = recv[3]
-      print("failure", "worker_id:" .. worker_id, "task_id:" .. task_id, recv[4])
+      local task = tasks[msg.task_id]
+      task.status = status
+      task.worker_id = nil
+      task.result = { unpack(msg, 2) }
+      print(("[%s] worker_id:%d task_id:%d"):format(status, msg.worker_id, msg.task_id))
+    elseif status == "progress" then
+      local task = tasks[msg.task_id]
+      task.progress = { unpack(msg, 2) }
+    elseif status == "quit" then
+      local worker_id = msg.worker_id
       local worker = workers[worker_id]
-      worker.status = "idle"
-      worker_queue:push(workers[worker_id])
-      local task = tasks[task_id]
-      task.status = "failure"
-      task.worker.intr_channel = nil
-      run(self)
-    elseif req == "quit" then
-      print("quit", "worker_id:" .. worker_id)
-      local worker = workers[worker_id]
-      workers[worker_id] = nil
+      workers[woker_id] = nil
       self.worker_count = self.worker_count - 1
       worker.thread:wait()
+      print(("[%s] worker_id:%d"):format(status, worker_id))
     end
   end
 
