@@ -7,8 +7,6 @@ local love = {
   thread = require "love.thread";
 }
 
-local unpack = table.unpack or unpack
-
 local worker_id, recv_channel, send_channel, intr_channel = ...
 
 local function task_sleep(task_id, s)
@@ -31,10 +29,10 @@ end
 while true do
   local msg = recv_channel:demand()
   if msg then
-    local method = msg[1]
-    if method == "quit" then
+    local name = msg[1]
+    if name == "quit" then
       break
-    elseif method == "task" then
+    elseif name == "task" then
       local task_id = msg.task_id
       local command = msg[2]
       if command == "sleep" then

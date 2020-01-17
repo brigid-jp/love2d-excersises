@@ -78,7 +78,7 @@ local function new_task(self, ...)
   local task = {
     task_id = task_id;
     status = "pending";
-    ...
+    ...;
   }
   self.tasks[task_id] = task
 
@@ -110,7 +110,6 @@ local function new(start_workers, max_workers, max_spare_workers)
     task_id = 0;
     tasks = {};
     task_queue = queue();
-    task_count = 0;
   }
 
   for i = 1, start_workers do
@@ -183,8 +182,8 @@ function class:update()
     if not msg then
       break
     end
-    local status = msg[1]
-    if status == "success" or status == "failure" then
+    local name = msg[1]
+    if name == "success" or name == "failure" then
       local worker = workers[msg.worker_id]
       worker.status = "idle"
       worker_queue:push(worker)
@@ -194,10 +193,10 @@ function class:update()
       task.worker_id = nil
       task.result = { unpack(msg, 2) }
       print(("[%s] worker_id:%d task_id:%d"):format(status, msg.worker_id, msg.task_id))
-    elseif status == "progress" then
+    elseif name == "progress" then
       local task = tasks[msg.task_id]
       task.progress = { unpack(msg, 2) }
-    elseif status == "quit" then
+    elseif name == "quit" then
       local worker_id = msg.worker_id
       local worker = workers[worker_id]
       workers[woker_id] = nil
