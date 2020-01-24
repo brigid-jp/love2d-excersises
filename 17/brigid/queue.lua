@@ -18,15 +18,10 @@ function class:push(item)
   local n = self.n + 1
   self.n = n
   self[n] = item
-  return self
 end
 
 function class:peek()
-  local m = self.m
-  if m > self.n then
-    return
-  end
-  return self[m]
+  return self[self.m]
 end
 
 function class:pop()
