@@ -56,7 +56,7 @@ end)()
 while true do
   local message = recv_channel:demand()
   local method = message[1]
-  if method == "quit" then
+  if method == "close" then
     break
   elseif method == "task" then
     local task = message[2]
@@ -86,4 +86,4 @@ while true do
   end
 end
 
-send_channel:push { "quit", thread_id }
+send_channel:push { "closed", thread_id }

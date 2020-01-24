@@ -21,6 +21,14 @@ function class:push(item)
   return self
 end
 
+function class:peek()
+  local m = self.m
+  if m > self.n then
+    return
+  end
+  return self[m]
+end
+
 function class:pop()
   local m = self.m
   local n = self.n

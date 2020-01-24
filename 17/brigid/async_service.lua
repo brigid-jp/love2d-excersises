@@ -52,12 +52,12 @@ local function new(start_threads, max_threads, max_spare_threads)
   return self
 end
 
-local function process(self)
+local function run(self)
   local thread_queue = self.thread_queue
   local task_queue = self.task_queue
 
   while not task_queue:empty() do
-    local task = task_queue:pop()
+    local task = task_queue:peek()
     if task.status == "pending" then
       local thread = thread_queue:pop()
       if not thread then
@@ -67,8 +67,10 @@ local function process(self)
           break
         end
       end
-      thread:run_task(task)
+      task:run(thread)
+      thread:run(task)
     end
+    task_queue:pop()
   end
 end
 
@@ -78,6 +80,7 @@ local metatable = { __index = class }
 function class:update()
   local recv_channel = self.recv_channel
   local thread_table = self.thread_table
+  local thread_queue = self.thread_queue
 
   while true do
     local message = recv_channel:pop()
@@ -88,15 +91,26 @@ function class:update()
     local name = message[1]
     local thread_id = message[2]
     local thread = thread_table[thread_id]
-    print(name, thread_id)
-    if name == "quit" then
+    if name == "closed" then
       thread_table[thread_id] = nil
       self.thread_count = self.thread_count - 1
       thread:wait()
     elseif name == "progress" then
+      -- TODO
     else
-      thread:complete_task(name, unpack(message, 3))
+      local task = thread:complete()
+      task:complete(name, unpack(message, 3))
+      thread_queue:push(thread)
     end
+  end
+
+  if self.task_queue:empty() then
+    local thread_queue = self.thread_queue
+    for i = 1, thread_queue:count() - self.max_spare_threads do
+      thread_queue:pop():close()
+    end
+  else
+    run(self)
   end
 end
 
@@ -105,8 +119,9 @@ end
 
 function class:sleep(...)
   local task = async_task("sleep", ...)
+  print(tostring(task))
   self.task_queue:push(task)
-  process(self)
+  run(self)
   return task
 end
 
@@ -117,7 +132,7 @@ function class:test1()
     if not thread then
       break
     end
-    thread:quit()
+    thread:close()
   end
 end
 

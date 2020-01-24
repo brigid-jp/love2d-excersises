@@ -21,34 +21,29 @@ end
 local class = {}
 local metatable = { __index = class }
 
-function class:quit()
-  return self.send_channel:push { "quit" }
+function class:cancel()
+  self.intr_channel:push { "cancel" }
+end
+
+function class:run(task)
+  self.status = "active"
+  self.task = task
+  self.send_channel:push { "task", unpack(task) }
+end
+
+function class:complete()
+  local task = self.task
+  self.status = "idle"
+  self.task = nil
+  return task
+end
+
+function class:close()
+  self.send_channel:push { "close" }
 end
 
 function class:wait()
   self.thread:wait()
-end
-
-function class:run_task(task)
-  self.status = "active"
-  self.task = task
-  task.status = "running"
-  task.thread = self
-  self.send_channel:push { "task", unpack(task) }
-end
-
-function class:cancel_task()
-  self.intr_channel:push { "cancel" }
-end
-
-function class:complete_task(status, ...)
-  local task = self.task
-  self.status = "inactive"
-  self.task = nil
-  task.status = status
-  task.thread = nil
-  task.result = { ... }
-  return task
 end
 
 return setmetatable(class, {

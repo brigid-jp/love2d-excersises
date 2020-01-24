@@ -8,11 +8,21 @@ local metatable = { __index = class }
 function class:cancel()
   local status = self.status
   if status == "pending" then
-    self.status = "failure"
-    self.result = { "canceled" }
+    self:complete("failure", "canceled")
   elseif status == "running" then
-    self.thread:cancel_task()
+    self.thread:cancel()
   end
+end
+
+function class:run(thread)
+  self.status = "running"
+  self.thread = thread
+end
+
+function class:complete(status, ...)
+  self.status = status
+  self.thread = nil
+  self.result = { ... }
 end
 
 return setmetatable(class, {
