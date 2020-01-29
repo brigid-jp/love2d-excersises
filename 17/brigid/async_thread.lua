@@ -4,16 +4,16 @@
 
 local function new(thread_id, recv_channel)
   local thread = love.thread.newThread "brigid/async_thread_impl.lua"
-  local send_channel = love.thread.newChannel()
   local intr_channel = love.thread.newChannel()
+  local send_channel = love.thread.newChannel()
 
-  thread:start(thread_id, recv_channel, send_channel, intr_channel)
+  thread:start(thread_id, recv_channel, intr_channel, send_channel)
 
   return {
     thread_id = thread_id;
     thread = thread;
-    send_channel = send_channel;
     intr_channel = intr_channel;
+    send_channel = send_channel;
     status = "idle";
   }
 end
@@ -26,16 +26,21 @@ function class:cancel()
 end
 
 function class:run(task)
+  task:run(self)
+
   self.status = "active"
   self.task = task
+  self.intr_channel:clear()
   self.send_channel:push { "task", unpack(task) }
 end
 
-function class:complete()
+function class:complete(...)
   local task = self.task
+
   self.status = "idle"
   self.task = nil
-  return task
+
+  task:complete(...)
 end
 
 function class:close()

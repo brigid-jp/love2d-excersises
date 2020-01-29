@@ -11,7 +11,7 @@ local service
 local f
 
 function love.load()
-  service = async.service(4)
+  service = async.service(1)
 
   service:dispatch(function ()
     local f1 = service:sleep(2)
@@ -56,6 +56,9 @@ function love.keyreleased(key)
   elseif key == "s" then
     print "s"
     f = service:sleep(2)
+  elseif key == "t" then
+    print "t"
+    f = service:sleep2(2)
   elseif key == "c" then
     print "c"
     if f then

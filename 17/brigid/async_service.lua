@@ -67,7 +67,6 @@ local function run(self)
           break
         end
       end
-      task:run(thread)
       thread:run(task)
     end
     task_queue:pop()
@@ -98,8 +97,8 @@ function class:update()
     elseif name == "progress" then
       -- TODO
     else
-      local task = thread:complete()
-      task:complete(name, unpack(message, 3))
+      local task = thread:complete(name, unpack(message, 3))
+      print(name, unpack(message, 3))
       thread_queue:push(thread)
     end
   end
@@ -119,6 +118,14 @@ end
 
 function class:sleep(...)
   local task = async_task("sleep", ...)
+  print(tostring(task))
+  self.task_queue:push(task)
+  run(self)
+  return task
+end
+
+function class:sleep2(...)
+  local task = async_task("sleep2", ...)
   print(tostring(task))
   self.task_queue:push(task)
   run(self)

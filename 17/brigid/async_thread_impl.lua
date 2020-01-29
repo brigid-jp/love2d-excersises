@@ -7,7 +7,7 @@ local love = {
 }
 local async_promise = require "brigid.async_promise"
 
-local thread_id, send_channel, recv_channel, intr_channel = ...
+local thread_id, send_channel, intr_channel, recv_channel = ...
 
 while true do
   local message = recv_channel:demand()
@@ -16,7 +16,7 @@ while true do
     break
   elseif method == "task" then
     local task = message[2]
-    local promise = async_promise(thread_id, send_channel, intr_channel)
+    local promise = async_promise(thread_id, intr_channel, send_channel)
 
     if task == "sleep" then
       local s = message[3]
@@ -38,6 +38,10 @@ while true do
       else
         promise:failure(message)
       end
+    elseif task == "sleep2" then
+      local s = message[3]
+      love.timer.sleep(s)
+      promise:success(69)
     end
   end
 end

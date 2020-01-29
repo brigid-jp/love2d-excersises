@@ -2,11 +2,11 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
-local function new(thread_id, send_channel, intr_channel)
+local function new(thread_id, intr_channel, send_channel)
   return {
     thread_id = thread_id;
-    send_channel = send_channel;
     intr_channel = intr_channel;
+    send_channel = send_channel;
   }
 end
 
