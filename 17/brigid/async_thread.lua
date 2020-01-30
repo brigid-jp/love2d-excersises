@@ -34,6 +34,10 @@ function class:run(task)
   self.send_channel:push { "task", unpack(task) }
 end
 
+function class:set_progress(...)
+  self.task:set_progress(...)
+end
+
 function class:complete(...)
   local task = self.task
 

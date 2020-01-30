@@ -95,10 +95,9 @@ function class:update()
       self.thread_count = self.thread_count - 1
       thread:wait()
     elseif name == "progress" then
-      -- TODO
+      thread:set_progress(unpack(message, 3))
     else
-      local task = thread:complete(name, unpack(message, 3))
-      print(name, unpack(message, 3))
+      thread:complete(name, unpack(message, 3))
       thread_queue:push(thread)
     end
   end

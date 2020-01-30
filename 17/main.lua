@@ -5,13 +5,13 @@
 local G = love.graphics
 local W = love.window
 
-local async = require "brigid.async"
+local async_service = require "brigid.async_service"
 
 local service
 local f
 
 function love.load()
-  service = async.service(1)
+  service = async_service(1)
 
   service:dispatch(function ()
     local f1 = service:sleep(2)

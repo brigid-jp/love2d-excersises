@@ -19,6 +19,10 @@ function class:run(thread)
   self.thread = thread
 end
 
+function class:set_progress(...)
+  self.progress = { ... }
+end
+
 function class:complete(status, ...)
   self.status = status
   self.thread = nil
