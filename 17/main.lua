@@ -8,35 +8,11 @@ local W = love.window
 local async_service = require "brigid.async_service"
 
 local service
-local f
+local tasks = {}
+local n = 0
 
 function love.load()
-  service = async_service(1)
-
-  service:dispatch(function ()
-    local f1 = service:sleep(2)
-    assert(f1:get())
-
-    local f2 = service:sleep(2)
-    assert(f2:get())
-
-    local f3 = service:sleep(2)
-    local f4 = service:sleep(4)
-    local f5 = service:sleep(5)
-
-    async.wait_all(f3, f4, f5)
-    assert(f3:get())
-    assert(f4:get())
-    assert(f5:get())
-    assert(f6:get())
-  end)
-
-  service:dispatch(function ()
-    while true do
-      local f = service:wait()
-      assert(f:get())
-    end
-  end)
+  service = async_service(2)
 end
 
 function love.update(dt)
@@ -45,9 +21,19 @@ end
 
 function love.draw()
   local x, y, w, h = W.getSafeArea()
+  local buffer = {}
+  for i = 1, n do
+    local task = tasks[i]
+    local progress = task.progress
+    if progress then
+      progress = ("%.2f%%"):format(progress[1] / progress[2] * 100)
+    else
+      progress = ""
+    end
+    buffer[i] = i .. " " .. tostring(task) .. " " .. task.status .. " " .. progress
+  end
+  G.printf(table.concat(buffer, "\n"), x + 24, y + 24, w - 48)
 end
-
-local f
 
 function love.keyreleased(key)
   if key == "q" then
@@ -55,14 +41,17 @@ function love.keyreleased(key)
     service:test1()
   elseif key == "s" then
     print "s"
-    f = service:sleep(2)
+    n = n + 1
+    tasks[n] = service:sleep(2)
   elseif key == "t" then
     print "t"
-    f = service:sleep2(2)
+    n = n + 1
+    tasks[n] = service:sleep2(2)
   elseif key == "c" then
     print "c"
-    if f then
-      f:cancel()
+    local task = tasks[n]
+    if task then
+      task:cancel()
     end
   end
 end

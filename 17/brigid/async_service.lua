@@ -117,7 +117,6 @@ end
 
 function class:sleep(...)
   local task = async_task("sleep", ...)
-  print(tostring(task))
   self.task_queue:push(task)
   run(self)
   return task
@@ -125,7 +124,6 @@ end
 
 function class:sleep2(...)
   local task = async_task("sleep2", ...)
-  print(tostring(task))
   self.task_queue:push(task)
   run(self)
   return task
