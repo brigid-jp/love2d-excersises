@@ -22,6 +22,8 @@ end
 function love.draw()
   local x, y, w, h = W.getSafeArea()
   local buffer = {}
+
+  buffer[1] = ("thread total %d / queue %d"):format(service.thread_count, service.thread_queue:count())
   for i = 1, n do
     local task = tasks[i]
     local progress = task.progress
@@ -30,7 +32,7 @@ function love.draw()
     else
       progress = ""
     end
-    buffer[i] = i .. " " .. tostring(task) .. " " .. task.status .. " " .. progress
+    buffer[i + 1] = i .. " " .. tostring(task) .. " " .. task.status .. " " .. progress
   end
   G.printf(table.concat(buffer, "\n"), x + 24, y + 24, w - 48)
 end
