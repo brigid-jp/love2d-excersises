@@ -12,7 +12,7 @@ local tasks = {}
 local n = 0
 
 function love.load()
-  service = async_service(2)
+  service = async_service(0, 4, 2)
 end
 
 function love.update(dt)

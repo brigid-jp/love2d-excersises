@@ -5,12 +5,13 @@
 local love = {
   system = require "love.system";
   thread = require "love.thread";
-  timer = require "love.timer";
 }
 
-local queue = require "brigid.queue"
 local async_task = require "brigid.async_task"
 local async_thread = require "brigid.async_thread"
+local queue = require "brigid.queue"
+
+local unpack = table.unpack or unpack
 
 local function new_thread(self)
   local thread_id = self.thread_id + 1
@@ -18,10 +19,7 @@ local function new_thread(self)
 
   local thread = async_thread(thread_id, self.recv_channel)
   self.thread_table[thread_id] = thread
-  self.thread_queue:push(thread)
   self.thread_count = self.thread_count + 1
-
-  print("new_thread", thread_id, self.thread_count)
 
   return thread
 end
@@ -37,19 +35,21 @@ local function new(start_threads, max_threads, max_spare_threads)
     max_spare_threads = max_threads
   end
 
+  local thread_queue = queue()
+
   local self = {
     max_threads = max_threads;
     max_spare_threads = max_spare_threads;
     recv_channel = love.thread.newChannel();
     thread_id = 0;
     thread_table = {};
-    thread_queue = queue();
+    thread_queue = thread_queue;
     thread_count = 0;
     task_queue = queue();
   }
 
   for i = 1, start_threads do
-    new_thread(self)
+    thread_queue:push(new_thread(self))
   end
 
   return self
@@ -65,17 +65,24 @@ local function run(self)
       local thread = thread_queue:pop()
       if not thread then
         if self.thread_count < self.max_threads then
-          new_thread(self)
-          thread = thread_queue:pop()
+          thread = new_thread(self)
         else
           break
         end
       end
-      print("run", thread.thread_id)
+      task_queue:pop()
       thread:run(task)
+    else
+      task_queue:pop()
     end
-    task_queue:pop()
   end
+end
+
+local function new_task(self, ...)
+  local task = async_task(...)
+  self.task_queue:push(task)
+  run(self)
+  return task
 end
 
 local class = {}
@@ -99,7 +106,6 @@ function class:update()
       thread_table[thread_id] = nil
       self.thread_count = self.thread_count - 1
       thread:wait()
-      print("closed", thread_id, self.thread_count, thread_queue:count())
     elseif status == "progress" then
       thread:set_progress(unpack(message, 3))
     else
@@ -119,17 +125,11 @@ function class:update()
 end
 
 function class:sleep(...)
-  local task = async_task("sleep", ...)
-  self.task_queue:push(task)
-  run(self)
-  return task
+  return new_task(self, "sleep", ...)
 end
 
 function class:sleep2(...)
-  local task = async_task("sleep2", ...)
-  self.task_queue:push(task)
-  run(self)
-  return task
+  return new_task(self, "sleep2", ...)
 end
 
 function class:test1()
