@@ -10,9 +10,16 @@ local async_service = require "brigid.async_service"
 local service
 local tasks = {}
 local n = 0
+local coro
 
 function love.load()
   service = async_service(0, 4, 2)
+
+  service:dispatch(function ()
+    local future = service:sleep(2)
+    local v = future:get()
+    print(v)
+  end)
 end
 
 function love.update(dt)
