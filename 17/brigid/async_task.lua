@@ -61,4 +61,3 @@ return setmetatable(class, {
     return setmetatable({ action = { ... }, status = "pending" }, metatable)
   end;
 })
-
