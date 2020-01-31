@@ -10,19 +10,19 @@ local function new(thread_id, intr_channel, send_channel)
   }
 end
 
+local function dispatch(self, result, ...)
+  if result then
+    self.send_channel:push { "success", self.thread_id, ... }
+  else
+    self.send_channel:push { "failure", self.thread_id, ... }
+  end
+end
+
 local class = {}
 local metatable = { __index = class }
 
 function class:progress(...)
   self.send_channel:push { "progress", self.thread_id, ... }
-end
-
-function class:success(...)
-  self.send_channel:push { "success", self.thread_id, ... }
-end
-
-function class:failure(...)
-  self.send_channel:push { "failure", self.thread_id, ... }
 end
 
 function class:check_canceled()
@@ -39,12 +39,7 @@ function class:check_canceled()
 end
 
 function class:dispatch(f, ...)
-  local result = { pcall(f, ...) }
-  if result[1] then
-    self:success(unpack(result, 2))
-  else
-    self:failure(unpack(result, 2))
-  end
+  dispatch(self, pcall(f, ...))
 end
 
 return setmetatable(class, {
