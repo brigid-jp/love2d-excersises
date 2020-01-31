@@ -11,16 +11,14 @@ local thread_id, send_channel, intr_channel, recv_channel = ...
 
 while true do
   local message = recv_channel:demand()
-  local method = message[1]
-  if method == "close" then
+  if message == "close" then
     break
-  elseif method == "task" then
-    local task = message[2]
+  else
+    local action = message[1]
     local promise = async_promise(thread_id, intr_channel, send_channel)
-    if task == "sleep" then
-      local s = message[3]
+    if action == "sleep" then
       promise:dispatch(function (s)
-        local n = 10
+        local n = 100
         promise:progress(0, n)
         for i = 1, n do
           if promise:check_canceled() then
@@ -30,13 +28,12 @@ while true do
           promise:progress(i, n)
         end
         return 42
-      end, message[3])
-    elseif task == "sleep2" then
-      local s = message[3]
+      end, message[2])
+    elseif action == "sleep2" then
       promise:dispatch(function (s)
         love.timer.sleep(s)
         return 69
-      end, message[3])
+      end, message[2])
     end
   end
 end

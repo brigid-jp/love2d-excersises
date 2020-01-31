@@ -22,7 +22,7 @@ local class = {}
 local metatable = { __index = class }
 
 function class:cancel()
-  self.intr_channel:push { "cancel" }
+  self.intr_channel:push "cancel"
 end
 
 function class:run(task)
@@ -31,24 +31,24 @@ function class:run(task)
   self.status = "active"
   self.task = task
   self.intr_channel:clear()
-  self.send_channel:push { "task", unpack(task) }
+  self.send_channel:push(task.action)
 end
 
 function class:set_progress(...)
   self.task:set_progress(...)
 end
 
-function class:complete(...)
+function class:set_ready(...)
   local task = self.task
 
   self.status = "idle"
   self.task = nil
 
-  task:complete(...)
+  task:set_ready(...)
 end
 
 function class:close()
-  self.send_channel:push { "close" }
+  self.send_channel:push "close"
 end
 
 function class:wait()

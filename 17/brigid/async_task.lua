@@ -8,7 +8,7 @@ local metatable = { __index = class }
 function class:cancel()
   local status = self.status
   if status == "pending" then
-    self:complete("failure", "canceled")
+    self:set_ready("failure", "canceled")
   elseif status == "running" then
     self.thread:cancel()
   end
@@ -23,7 +23,7 @@ function class:set_progress(...)
   self.progress = { ... }
 end
 
-function class:complete(status, ...)
+function class:set_ready(status, ...)
   self.status = status
   self.thread = nil
   self.result = { ... }
@@ -31,7 +31,7 @@ end
 
 return setmetatable(class, {
   __call = function (_, ...)
-    return setmetatable({ status = "pending", ... }, metatable)
+    return setmetatable({ action = { ... }, status = "pending" }, metatable)
   end;
 })
 

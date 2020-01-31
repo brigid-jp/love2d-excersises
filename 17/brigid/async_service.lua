@@ -20,6 +20,9 @@ local function new_thread(self)
   self.thread_table[thread_id] = thread
   self.thread_queue:push(thread)
   self.thread_count = self.thread_count + 1
+
+  print("new_thread", thread_id, self.thread_count)
+
   return thread
 end
 
@@ -62,11 +65,13 @@ local function run(self)
       local thread = thread_queue:pop()
       if not thread then
         if self.thread_count < self.max_threads then
-          thread = new_thread(self)
+          new_thread(self)
+          thread = thread_queue:pop()
         else
           break
         end
       end
+      print("run", thread.thread_id)
       thread:run(task)
     end
     task_queue:pop()
@@ -87,17 +92,18 @@ function class:update()
       break
     end
 
-    local name = message[1]
+    local status = message[1]
     local thread_id = message[2]
     local thread = thread_table[thread_id]
-    if name == "closed" then
+    if status == "closed" then
       thread_table[thread_id] = nil
       self.thread_count = self.thread_count - 1
       thread:wait()
-    elseif name == "progress" then
+      print("closed", thread_id, self.thread_count, thread_queue:count())
+    elseif status == "progress" then
       thread:set_progress(unpack(message, 3))
     else
-      thread:complete(name, unpack(message, 3))
+      thread:set_ready(status, unpack(message, 3))
       thread_queue:push(thread)
     end
   end
