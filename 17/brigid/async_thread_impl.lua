@@ -17,10 +17,9 @@ while true do
   elseif method == "task" then
     local task = message[2]
     local promise = async_promise(thread_id, intr_channel, send_channel)
-
     if task == "sleep" then
       local s = message[3]
-      local result, message = pcall(function ()
+      promise:dispatch(function (s)
         local n = 10
         promise:progress(0, n)
         for i = 1, n do
@@ -31,17 +30,13 @@ while true do
           promise:progress(i, n)
         end
         return 42
-      end)
-
-      if result then
-        promise:success(message)
-      else
-        promise:failure(message)
-      end
+      end, message[3])
     elseif task == "sleep2" then
       local s = message[3]
-      love.timer.sleep(s)
-      promise:success(69)
+      promise:dispatch(function (s)
+        love.timer.sleep(s)
+        return 69
+      end, message[3])
     end
   end
 end

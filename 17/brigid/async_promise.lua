@@ -38,6 +38,15 @@ function class:check_canceled()
   return result
 end
 
+function class:dispatch(f, ...)
+  local result = { pcall(f, ...) }
+  if result[1] then
+    self:success(unpack(result, 2))
+  else
+    self:failure(unpack(result, 2))
+  end
+end
+
 return setmetatable(class, {
   __call = function (_, ...)
     return setmetatable(new(...), metatable)

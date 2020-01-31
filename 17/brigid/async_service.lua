@@ -112,9 +112,6 @@ function class:update()
   end
 end
 
-function class:dispatch()
-end
-
 function class:sleep(...)
   local task = async_task("sleep", ...)
   self.task_queue:push(task)
