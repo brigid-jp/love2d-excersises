@@ -15,11 +15,24 @@ local coro
 function love.load()
   service = async_service(0, 4, 2)
 
-  service:dispatch(function ()
-    local future = service:sleep(2)
-    local v = future:get()
-    print(v)
+  local coro = coroutine.create(function ()
+    print "coro start"
+    for i = 1, 10 do
+      local future = service:sleep(2)
+      print("coro waiting", i)
+      future:wait()
+      print("coro waited", i)
+      local v = future:get()
+      print(v)
+    end
   end)
+  coroutine.resume(coro)
+
+  -- service:dispatch(function ()
+  --   local future = service:sleep(2)
+  --   local v = future:get()
+  --   print(v)
+  -- end)
 end
 
 function love.update(dt)
@@ -31,6 +44,7 @@ function love.draw()
   local buffer = {}
 
   buffer[1] = ("thread total %d / queue %d"):format(service.thread_count, service.thread_queue:count())
+  buffer[2] = love.timer.getFPS() .. " fps"
   for i = 1, n do
     local task = tasks[i]
     local progress = task.progress
@@ -39,7 +53,7 @@ function love.draw()
     else
       progress = ""
     end
-    buffer[i + 1] = i .. " " .. tostring(task) .. " " .. task.status .. " " .. progress
+    buffer[i + 2] = i .. " " .. tostring(task) .. " " .. task.status .. " " .. progress
   end
   G.printf(table.concat(buffer, "\n"), x + 24, y + 24, w - 48)
 end
