@@ -28,7 +28,7 @@ local function down_heap(self, u, i, j)
     if v < u then
       self[i] = v
       self[j] = u
-      return down_heap(self, v, j, j * 2)
+      return down_heap(self, u, j, j * 2)
     end
   end
 end
