@@ -26,18 +26,18 @@ end
 local unpack = table.unpack or unpack
 
 local function check(...)
-  print("<", ...)
+  -- print("<", ...)
   local source = { ... }
   local expect = { ... }
   table.sort(expect)
-  print("?", unpack(expect))
+  -- print("?", unpack(expect))
 
   local heap = binary_heap()
   for i = 1, #source do
     heap:push(i)
   end
 
-  dump(heap)
+  -- dump(heap)
 
   local n = 0
   while true do
@@ -46,10 +46,10 @@ local function check(...)
       break
     end
     n = n + 1
-    print("!", v, expect[n])
+    -- print("!", v, expect[n])
     assert(v == expect[n])
 
-    dump(heap)
+    -- dump(heap)
 
   end
   assert(n == #expect)
@@ -77,15 +77,22 @@ local function perm(m, n, result, ...)
   end
 end
 
---[[
-for i = 3, 8 do
-  local result = {}
-  perm(i, i, result)
-  for i = 1, #result do
-    check(unpack(result[i]))
+local timer = unix.timer()
+
+if os.getenv "TEST" == "1" then
+  print "test started"
+  timer:start()
+  for i = 3, 8 do
+    local result = {}
+    perm(i, i, result)
+    for i = 1, #result do
+      check(unpack(result[i]))
+    end
   end
+  timer:stop()
+  print "test finished"
+  print("test", timer:elapsed())
 end
-]]
 
 local heap = binary_heap()
 
@@ -108,7 +115,6 @@ print(heap:pop())
 dump(heap)
 
 local heap = binary_heap()
-local timer = unix.timer()
 
 timer:start()
 for i = 1, 1000000 do

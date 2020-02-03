@@ -3,20 +3,23 @@
 -- https://opensource.org/licenses/mit-license.php
 
 local function up_heap(self, u, i)
-  if i > 1 then
+  while i > 1 do
     local j = (i - i % 2) / 2
     local v = self[j]
     if u < v then
       self[i] = v
       self[j] = u
-      return up_heap(self, u, j)
+      i = j
+    else
+      break
     end
   end
 end
 
-local function down_heap(self, u, i, j)
+local function down_heap(self, u, i)
+  local j = i * 2
   local v = self[j]
-  if v then
+  while v do
     local k = j + 1
     local w = self[k]
     if w then
@@ -28,7 +31,11 @@ local function down_heap(self, u, i, j)
     if v < u then
       self[i] = v
       self[j] = u
-      return down_heap(self, u, j, j * 2)
+      i = j
+      j = j * 2
+      v = self[j]
+    else
+      break
     end
   end
 end
@@ -63,7 +70,7 @@ function class:pop()
     self.n = n - 1
     self[1] = v
     self[n] = nil
-    down_heap(self, v, 1, 2)
+    down_heap(self, v, 1)
   end
   return u
 end
