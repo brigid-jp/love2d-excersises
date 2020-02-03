@@ -3,6 +3,7 @@
 -- https://opensource.org/licenses/mit-license.php
 
 local binary_heap = require "brigid.binary_heap"
+local unix = require "dromozoa.unix"
 
 local function dump(heap)
   io.write "----\n"
@@ -35,5 +36,48 @@ dump(heap)
 print "===="
 print(heap:pop())
 dump(heap)
+print "===="
 print(heap:pop())
 dump(heap)
+print "===="
+print(heap:pop())
+dump(heap)
+
+local heap = binary_heap()
+local timer = unix.timer()
+
+timer:start()
+for i = 1, 1000000 do
+  heap:push(i)
+end
+timer:stop()
+print("push", timer:elapsed())
+
+timer:start()
+for i = 1, 1000000 do
+  heap:pop()
+end
+timer:stop()
+print("pop", timer:elapsed())
+
+timer:start()
+for i = 1000000, 1, -1 do
+  heap:push(i)
+end
+timer:stop()
+print("push", timer:elapsed())
+
+timer:start()
+for i = 1, 1000000 do
+  heap:pop()
+end
+timer:stop()
+print("pop", timer:elapsed())
+
+local t = {}
+timer:start()
+for i = 1000000, 1, -1 do
+  t[#t + 1] = i
+end
+timer:stop()
+print("seq", timer:elapsed())
