@@ -2,54 +2,16 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
--- handle to index
--- index to handle
-
--- m handle generator
--- n size of heap
-
---[[
-
-map[h] = v
-
-heap[i] = h
-peah[h] = i
-
-
-heap[i] = v
-htoi[h] = i
-itoh[i] = h
-
-
-heap[i] = p
-value_table[p] = v
-index_table[p] = i
-
-values
-indices
-
-heap[i] = p
-deref
-*p == v
-indexof(p)
-
-htov[h] = v
-htoi[h] = i
-
-
-
-]]
-
-local function up_heap(heap, index, value, i, x, u)
+local function up_heap(heap, index, value, i, p, u)
   while i > 1 do
     local j = (i - i % 2) / 2
-    local y = heap[j]
-    local v = value[y]
+    local q = heap[j]
+    local v = value[q]
     if u < v then
-      heap[i] = y
-      heap[j] = x
-      index[x] = j
-      index[y] = i
+      heap[i] = q
+      heap[j] = p
+      index[p] = j
+      index[q] = i
       i = j
     else
       break
@@ -57,29 +19,29 @@ local function up_heap(heap, index, value, i, x, u)
   end
 end
 
-local function down_heap(heap, index, value, i, x, u)
+local function down_heap(heap, index, value, i, p, u)
   local j = i * 2
-  local y = heap[j]
-  while y do
-    local v = value[y]
+  local q = heap[j]
+  while q do
+    local v = value[q]
     local k = j + 1
     local z = heap[k]
     if z then
       local w = value[z]
       if w < v then
         j = k
-        y = z
+        q = z
         v = w
       end
     end
     if v < u then
-      heap[i] = y
-      heap[j] = x
-      index[x] = j
-      index[y] = i
+      heap[i] = q
+      heap[j] = p
+      index[p] = j
+      index[q] = i
       i = j
-      j = j * 2
-      y = heap[j]
+      j = i * 2
+      q = heap[j]
     else
       break
     end
@@ -121,28 +83,65 @@ end
 
 function class:pop()
   local heap = self.heap
-  local x = heap[1]
-  if x then
+  local p = heap[1]
+  if p then
     local index = self.index
     local value = self.value
-
     local n = self.n
-    local y = heap[n]
 
-    heap[1] = y
+    local q = heap[n]
+    local u = value[p]
+
+    heap[1] = q
     heap[n] = nil
-    index[y] = 1
-    index[x] = nil
-
-    local u = value[x]
-    value[x] = nil
-
+    index[p] = nil
+    index[q] = 1
+    value[p] = nil
     self.n = n - 1
 
-    down_heap(heap, index, value, 1, y, value[y])
+    down_heap(heap, index, value, 1, q, value[q])
+
     return u
+  else
+    return nil
   end
-  return u
+end
+
+function class:remove(p)
+  local heap = self.heap
+  local index = self.index
+  local value = self.value
+
+
+--[[
+  local heap = self.heap
+  local key = self.key
+  local value = self.value
+
+  local i = key[uid]
+  local j = self.n
+  self.n = j - 1
+
+  if i == j then
+    heap[i] = nil
+    key[uid] = nil
+    value[uid] = nil
+  else
+    local vid = heap[j]
+    local v = value[vid]
+
+    heap[i] = vid
+    heap[j] = nil
+    key[uid] = nil
+    key[vid] = i
+    value[uid] = nil
+
+    if not down_heap(heap, key, value, vid, v, i) then
+      up_heap(heap, key, value, vid, v, i)
+    end
+  end
+]]
+
 end
 
 return setmetatable(class, {

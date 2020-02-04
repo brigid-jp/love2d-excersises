@@ -2,8 +2,8 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
-local binary_heap = require "brigid.binary_heap_pure"
--- local binary_heap = require "brigid.binary_heap"
+-- local binary_heap = require "brigid.binary_heap_pure"
+local binary_heap = require "brigid.binary_heap"
 local unix = require "dromozoa.unix"
 
 local function dump(heap)
