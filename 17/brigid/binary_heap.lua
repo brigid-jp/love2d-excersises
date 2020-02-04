@@ -66,11 +66,11 @@ function class:pop()
   local u = self[1]
   if u then
     local n = self.n
-    local v = self[n]
+    local u = self[n]
     self.n = n - 1
-    self[1] = v
+    self[1] = u
     self[n] = nil
-    down_heap(self, v, 1)
+    down_heap(self, u, 1)
   end
   return u
 end
