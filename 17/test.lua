@@ -2,7 +2,8 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
-local binary_heap = require "brigid.binary_heap"
+local binary_heap = require "brigid.binary_heap_pure"
+-- local binary_heap = require "brigid.binary_heap"
 local unix = require "dromozoa.unix"
 
 local function dump(heap)
@@ -16,6 +17,27 @@ local function dump(heap)
         io.write " "
       end
       io.write(heap[i])
+    end
+    m = m + w
+    w = w * 2
+    io.write "\n"
+  end
+end
+
+local function dump(self)
+  io.write "----\n"
+  local heap = self.heap
+  local value = self.value
+
+  local n = #heap
+  local m = 1
+  local w = 1
+  while m <= n do
+    for i = m, math.min(m + w - 1, n) do
+      if i > m then
+        io.write " "
+      end
+      io.write("[", heap[i], "]=", value[heap[i]])
     end
     m = m + w
     w = w * 2
@@ -94,6 +116,7 @@ if os.getenv "TEST" == "1" then
   print("test", timer:elapsed())
 end
 
+--[[
 local heap = binary_heap()
 
 heap:push(5)
@@ -113,6 +136,7 @@ dump(heap)
 print "===="
 print(heap:pop())
 dump(heap)
+]]
 
 local heap = binary_heap()
 
