@@ -116,27 +116,47 @@ if os.getenv "TEST" == "1" then
   print("test", timer:elapsed())
 end
 
---[[
-local heap = binary_heap()
+do
+  local function check(heap, expect)
+    local n = 0
+    while true do
+      local v = heap:pop()
+      if not v then
+        break
+      end
+      n = n + 1
+      assert(v == expect[n])
+    end
+    assert(n == #expect)
+  end
 
-heap:push(5)
-heap:push(11)
-heap:push(8)
-heap:push(3)
-heap:push(4)
-heap:push(15)
-dump(heap)
+  local v = { 5, 11, 8, 3, 4, 15 }
 
-print "===="
-print(heap:pop())
-dump(heap)
-print "===="
-print(heap:pop())
-dump(heap)
-print "===="
-print(heap:pop())
-dump(heap)
-]]
+  for i = 1, 6 do
+    local heap = binary_heap()
+    local h = {}
+
+    h[1] = heap:push(v[1])
+    h[2] = heap:push(v[2])
+    h[3] = heap:push(v[3])
+    h[4] = heap:push(v[4])
+    h[5] = heap:push(v[5])
+    h[6] = heap:push(v[6])
+    -- dump(heap)
+    -- print("REMOVE [" .. h[i] .. "]=" .. v[i])
+    heap:remove(h[i])
+    -- dump(heap)
+
+    local t = {}
+    for j = 1, 6 do
+      if i ~= j then
+        t[#t + 1] = v[j]
+      end
+    end
+    table.sort(t)
+    check(heap, t)
+  end
+end
 
 local heap = binary_heap()
 

@@ -20,6 +20,7 @@ local function up_heap(heap, index, value, i, p, u)
 end
 
 local function down_heap(heap, index, value, i, p, u)
+  local result
   local j = i * 2
   local q = heap[j]
   while q do
@@ -35,6 +36,7 @@ local function down_heap(heap, index, value, i, p, u)
       end
     end
     if v < u then
+      result = true
       heap[i] = q
       heap[j] = p
       index[p] = j
@@ -112,36 +114,31 @@ function class:remove(p)
   local index = self.index
   local value = self.value
 
+  local u = value[p]
 
---[[
-  local heap = self.heap
-  local key = self.key
-  local value = self.value
-
-  local i = key[uid]
+  local i = index[p]
   local j = self.n
   self.n = j - 1
 
   if i == j then
     heap[i] = nil
-    key[uid] = nil
-    value[uid] = nil
+    index[p] = nil
+    value[p] = nil
+    return u
   else
-    local vid = heap[j]
-    local v = value[vid]
+    local q = heap[j]
+    local v = value[q]
 
-    heap[i] = vid
+    heap[i] = q
     heap[j] = nil
-    key[uid] = nil
-    key[vid] = i
-    value[uid] = nil
+    index[p] = nil
+    index[q] = i
+    value[p] = nil
 
-    if not down_heap(heap, key, value, vid, v, i) then
-      up_heap(heap, key, value, vid, v, i)
+    if not down_heap(heap, index, value, i, q, v) then
+      up_heap(heap, index, value, i, q, v)
     end
   end
-]]
-
 end
 
 return setmetatable(class, {
