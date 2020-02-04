@@ -65,18 +65,18 @@ function class:push(u)
   local heap = self.heap
   local index = self.index
   local value = self.value
-  local m = self.m + 1
-  local n = self.n + 1
+  local p = self.m + 1
+  local i = self.n + 1
 
-  heap[n] = m
-  index[m] = n
-  value[m] = u
-  self.m = m
-  self.n = n
+  heap[i] = p
+  index[p] = i
+  value[p] = u
+  self.m = p
+  self.n = i
 
-  up_heap(heap, index, value, n, m, u)
+  up_heap(heap, index, value, i, p, u)
 
-  return m
+  return p
 end
 
 function class:peek()
@@ -89,17 +89,16 @@ function class:pop()
   if p then
     local index = self.index
     local value = self.value
-    local n = self.n
-
-    local q = heap[n]
+    local j = self.n
+    local q = heap[j]
     local u = value[p]
 
     heap[1] = q
-    heap[n] = nil
+    heap[j] = nil
     index[p] = nil
     index[q] = 1
     value[p] = nil
-    self.n = n - 1
+    self.n = j - 1
 
     down_heap(heap, index, value, 1, q, value[q])
 
