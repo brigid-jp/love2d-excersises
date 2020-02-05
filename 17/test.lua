@@ -144,7 +144,8 @@ do
     h[6] = heap:push(v[6])
     -- dump(heap)
     -- print("REMOVE [" .. h[i] .. "]=" .. v[i])
-    heap:remove(h[i])
+    local removed = heap:remove(h[i])
+    assert(removed == v[i])
     -- dump(heap)
 
     local t = {}

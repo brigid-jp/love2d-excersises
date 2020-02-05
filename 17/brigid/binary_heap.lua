@@ -20,23 +20,22 @@ local function up_heap(heap, index, value, i, p, u)
 end
 
 local function down_heap(heap, index, value, i, p, u)
-  local result
+  local result = false
   local j = i * 2
   local q = heap[j]
   while q do
     local v = value[q]
     local k = j + 1
-    local z = heap[k]
-    if z then
-      local w = value[z]
+    local r = heap[k]
+    if r then
+      local w = value[r]
       if w < v then
         j = k
-        q = z
+        q = r
         v = w
       end
     end
     if v < u then
-      result = true
       heap[i] = q
       heap[j] = p
       index[p] = j
@@ -44,10 +43,12 @@ local function down_heap(heap, index, value, i, p, u)
       i = j
       j = i * 2
       q = heap[j]
+      result = true
     else
       break
     end
   end
+  return result
 end
 
 local class = {}
@@ -65,14 +66,14 @@ function class:push(u)
   local heap = self.heap
   local index = self.index
   local value = self.value
-  local p = self.m + 1
   local i = self.n + 1
+  local p = self.m + 1
 
   heap[i] = p
   index[p] = i
   value[p] = u
-  self.m = p
   self.n = i
+  self.m = p
 
   up_heap(heap, index, value, i, p, u)
 
@@ -89,9 +90,9 @@ function class:pop()
   if p then
     local index = self.index
     local value = self.value
+    local u = value[p]
     local j = self.n
     local q = heap[j]
-    local u = value[p]
 
     heap[1] = q
     heap[j] = nil
@@ -112,18 +113,15 @@ function class:remove(p)
   local heap = self.heap
   local index = self.index
   local value = self.value
-
-  local u = value[p]
-
   local i = index[p]
+  local u = value[p]
   local j = self.n
-  self.n = j - 1
 
   if i == j then
-    heap[i] = nil
+    heap[j] = nil
     index[p] = nil
     value[p] = nil
-    return u
+    self.n = j - 1
   else
     local q = heap[j]
     local v = value[q]
@@ -133,16 +131,22 @@ function class:remove(p)
     index[p] = nil
     index[q] = i
     value[p] = nil
+    self.n = j - 1
 
     if not down_heap(heap, index, value, i, q, v) then
       up_heap(heap, index, value, i, q, v)
     end
   end
+
+  return u
+end
+
+function class:update(p, u)
 end
 
 return setmetatable(class, {
   __call = function ()
-    return setmetatable({ heap = {}, index = {}, value = {}, m = 0, n = 0 }, metatable)
+    return setmetatable({ heap = {}, index = {}, value = {}, n = 0, m = 0 }, metatable)
   end;
 })
 
