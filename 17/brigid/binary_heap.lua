@@ -111,9 +111,9 @@ function class:pop()
 
   local p = heap[1]
   if p then
-    local u = value[p]
     local j = self.n
     local q = heap[j]
+    local u = value[p]
 
     heap[1] = q
     heap[j] = nil
@@ -141,8 +141,8 @@ function class:remove(p)
   local value = self.value
 
   local i = index[p]
-  local u = value[p]
   local j = self.n
+  local u = value[p]
 
   if i == j then
     heap[j] = nil
