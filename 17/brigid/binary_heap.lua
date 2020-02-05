@@ -2,12 +2,29 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
-local function up_heap(heap, index, value, i, p, u)
+local function new(compare)
+  if not compare then
+    compare = function (a, b)
+      return a < b
+    end
+  end
+
+  return {
+    compare = compare;
+    heap = {};
+    index = {};
+    value = {};
+    n = 0;
+    m = 0;
+  }
+end
+
+local function up_heap(compare, heap, index, value, i, p, u)
   while i > 1 do
     local j = (i - i % 2) / 2
     local q = heap[j]
     local v = value[q]
-    if u < v then
+    if compare(u, v) then
       heap[i] = q
       heap[j] = p
       index[p] = j
@@ -19,7 +36,7 @@ local function up_heap(heap, index, value, i, p, u)
   end
 end
 
-local function down_heap(heap, index, value, i, p, u)
+local function down_heap(compare, heap, index, value, i, p, u)
   local result = false
   local j = i * 2
   local q = heap[j]
@@ -29,13 +46,13 @@ local function down_heap(heap, index, value, i, p, u)
     local r = heap[k]
     if r then
       local w = value[r]
-      if w < v then
+      if compare(w, v) then
         j = k
         q = r
         v = w
       end
     end
-    if v < u then
+    if compare(v, u) then
       heap[i] = q
       heap[j] = p
       index[p] = j
@@ -75,7 +92,7 @@ function class:push(u)
   self.n = i
   self.m = p
 
-  up_heap(heap, index, value, i, p, u)
+  up_heap(self.compare, heap, index, value, i, p, u)
 
   return p
 end
@@ -101,7 +118,7 @@ function class:pop()
     value[p] = nil
     self.n = j - 1
 
-    down_heap(heap, index, value, 1, q, value[q])
+    down_heap(self.compare, heap, index, value, 1, q, value[q])
 
     return u
   else
@@ -123,6 +140,7 @@ function class:remove(p)
     value[p] = nil
     self.n = j - 1
   else
+    local compare = self.compare
     local q = heap[j]
     local v = value[q]
 
@@ -133,8 +151,8 @@ function class:remove(p)
     value[p] = nil
     self.n = j - 1
 
-    if not down_heap(heap, index, value, i, q, v) then
-      up_heap(heap, index, value, i, q, v)
+    if not down_heap(compare, heap, index, value, i, q, v) then
+      up_heap(compare, heap, index, value, i, q, v)
     end
   end
 
@@ -142,6 +160,7 @@ function class:remove(p)
 end
 
 function class:update(p, u)
+  local compare = self.compare
   local heap = self.heap
   local index = self.index
   local value = self.value
@@ -151,16 +170,16 @@ function class:update(p, u)
 
   value[p] = u
 
-  if u < v then
-    up_heap(heap, index, value, i, p, u)
+  if compare(u, v) then
+    up_heap(compare, heap, index, value, i, p, u)
   else
-    down_heap(heap, index, value, i, p, u)
+    down_heap(compare, heap, index, value, i, p, u)
   end
 end
 
 return setmetatable(class, {
-  __call = function ()
-    return setmetatable({ heap = {}, index = {}, value = {}, n = 0, m = 0 }, metatable)
+  __call = function (_, ...)
+    return setmetatable(new(...), metatable)
   end;
 })
 

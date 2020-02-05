@@ -59,16 +59,24 @@ do
     return self[1] == x and self[2] == y
   end
 
-  function metatable.__lt(a, b)
-    return a[2] > b[2]
-  end
+  -- function metatable.__lt(a, b)
+  --   return a[2] > b[2]
+  -- end
 
   item = function (...)
     return setmetatable({ ... },  metatable)
   end
 end
 
-local x = binary_heap()
+-- local function item(...)
+--   return { ... }
+-- end
+
+local function compare(a, b)
+  return a[2] > b[2]
+end
+
+local x = binary_heap(compare)
 x:push(item(5, 1))
 check(x, { { 5, 1 } })
 x:push(item(4, 2))
@@ -86,7 +94,7 @@ assert(x:pop():eq(3, 3))
 assert(x:pop():eq(4, 2))
 assert(x:pop():eq(5, 1))
 
-local x = binary_heap()
+local x = binary_heap(compare)
 local h1 = x:push(item(1, 100))
 local h2 = x:push(item(2, 200))
 local h3 = x:push(item(3, 300))
@@ -116,7 +124,7 @@ check(x, { { 7, 700 }, { 4, 400 }, { 6, 600 }, { 1, 100 }, { 5, 0 } })
 x:update(h1, item(1, 1000))
 check(x, { { 1, 1000 }, { 7, 700 }, { 6, 600 }, { 4, 400 }, { 5, 0 } })
 
-local x = binary_heap()
+local x = binary_heap(compare)
 x:push(1)
 assert(not x:empty())
 assert(x:count() == 1)
