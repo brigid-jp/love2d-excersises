@@ -142,6 +142,20 @@ function class:remove(p)
 end
 
 function class:update(p, u)
+  local heap = self.heap
+  local index = self.index
+  local value = self.value
+
+  local i = index[p]
+  local v = value[p]
+
+  value[p] = u
+
+  if u < v then
+    up_heap(heap, index, value, i, p, u)
+  else
+    down_heap(heap, index, value, i, p, u)
+  end
 end
 
 return setmetatable(class, {
