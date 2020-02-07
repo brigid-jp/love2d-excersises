@@ -3,7 +3,7 @@
 -- https://opensource.org/licenses/mit-license.php
 
 local function new(comp)
-  if not comp then
+  if comp == nil then
     comp = function (a, b)
       return a < b
     end
@@ -176,18 +176,17 @@ function class:update(p, u)
   local i = index[p]
   local v = value[p]
 
-  if u then
+  if u == nil then
+    local heap = self.heap
+    if not down_heap(comp, heap, index, value, i, p, v) then
+      up_heap(comp, heap, index, value, i, p, v)
+    end
+  else
     value[p] = u
     if comp(u, v) then
       up_heap(comp, self.heap, index, value, i, p, u)
     else
       down_heap(comp, self.heap, index, value, i, p, u)
-    end
-  else
-    local heap = self.heap
-
-    if not down_heap(comp, heap, index, value, i, p, v) then
-      up_heap(comp, heap, index, value, i, p, v)
     end
   end
 end
