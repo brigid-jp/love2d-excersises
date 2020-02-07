@@ -9,6 +9,7 @@ local love = {
 
 local async_task = require "brigid.async_task"
 local async_thread = require "brigid.async_thread"
+local binary_heap = require "brigid.binary_heap"
 local queue = require "brigid.queue"
 
 local unpack = table.unpack or unpack
@@ -45,6 +46,7 @@ local function new(start_threads, max_threads, max_spare_threads)
     thread_table = {};
     thread_queue = thread_queue;
     thread_count = 0;
+    task_id = 0;
     task_queue = queue();
   }
 
@@ -79,7 +81,10 @@ local function run(self)
 end
 
 local function new_task(self, ...)
-  local task = async_task(...)
+  local task_id = self.task_id + 1
+  self.task_id = task_id
+
+  local task = async_task(task_id, ...)
   self.task_queue:push(task)
   run(self)
   return task

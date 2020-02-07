@@ -2,10 +2,18 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
+local unpack = table.unpack or unpack
+
+local function new(task_id, ...)
+  return {
+    task_id = task_id;
+    action = { ... };
+    status = "pending";
+  }
+end
+
 local class = {}
 local metatable = { __index = class }
-
-local unpack = table.unpack or unpack
 
 function class:cancel()
   local status = self.status
@@ -58,6 +66,6 @@ end
 
 return setmetatable(class, {
   __call = function (_, ...)
-    return setmetatable({ action = { ... }, status = "pending" }, metatable)
+    return setmetatable(new(...), metatable)
   end;
 })
