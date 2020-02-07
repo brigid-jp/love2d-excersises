@@ -45,6 +45,10 @@ local function dump(self)
   end
 end
 
+local function compare(a, b)
+  return a < b
+end
+
 local unpack = table.unpack or unpack
 
 local function check(...)
@@ -54,7 +58,7 @@ local function check(...)
   table.sort(expect)
   -- print("?", unpack(expect))
 
-  local heap = binary_heap()
+  local heap = binary_heap(compare)
   for i = 1, #source do
     heap:push(i)
   end
@@ -133,7 +137,7 @@ do
   local v = { 5, 11, 8, 3, 4, 15 }
 
   for i = 1, 6 do
-    local heap = binary_heap()
+    local heap = binary_heap(compare)
     local h = {}
 
     h[1] = heap:push(v[1])
@@ -159,7 +163,7 @@ do
   end
 end
 
-local heap = binary_heap()
+local heap = binary_heap(compare)
 
 timer:start()
 for i = 1, 1000000 do

@@ -5,7 +5,7 @@
 local function new(comp)
   if comp == nil then
     comp = function (a, b)
-      return a < b
+      return a > b
     end
   end
 
