@@ -26,7 +26,7 @@ function love.load()
       print(v)
     end
   end)
-  coroutine.resume(coro)
+  -- coroutine.resume(coro)
 
   -- service:dispatch(function ()
   --   local future = service:sleep(2)

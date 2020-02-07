@@ -15,6 +15,10 @@ end
 local class = {}
 local metatable = { __index = class }
 
+function class:compare_task_id(that)
+  return self.task_id < that.task_id
+end
+
 function class:cancel()
   local status = self.status
   if status == "pending" then

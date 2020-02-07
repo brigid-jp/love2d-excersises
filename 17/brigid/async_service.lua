@@ -47,7 +47,7 @@ local function new(start_threads, max_threads, max_spare_threads)
     thread_queue = thread_queue;
     thread_count = 0;
     task_id = 0;
-    task_queue = queue();
+    task_queue = binary_heap(async_task.compare_task_id);
   }
 
   for i = 1, start_threads do
