@@ -143,7 +143,7 @@ x:get(h1)[2] = 1000
 x:update(h1)
 check(x, { { 1, 1000 }, { 7, 700 }, { 6, 600 }, { 4, 400 }, { 5, 0 } })
 
-local x = binary_heap(compare)
+local x = binary_heap()
 x:push(1)
 assert(not x:empty())
 assert(x:count() == 1)
@@ -153,3 +153,19 @@ assert(x:count() == 0)
 assert(x:pop() == nil)
 assert(x:empty())
 assert(x:count() == 0)
+
+local x = binary_heap(compare)
+x:push(item(1, 200))
+check(x, { { 1, 200 } })
+x:push(item(2, 200))
+check(x, { { 1, 200 }, { 2, 200 } })
+x:push(item(3, 100))
+check(x, { { 1, 200 }, { 2, 200 }, { 3, 100 } })
+assert(x:pop():eq(1, 200))
+check(x, { { 2, 200 }, { 3, 100 } })
+x:push(item(4, 100))
+check(x, { { 2, 200 }, { 3, 100 }, { 4, 100 } })
+assert(x:pop():eq(2, 200))
+check(x, { { 4, 100 }, { 3, 100 } })
+
+
