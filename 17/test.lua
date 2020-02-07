@@ -194,5 +194,6 @@ timer:start()
 for i = 1000000, 1, -1 do
   t[#t + 1] = i
 end
+table.sort(t, function (a, b) return a > b end)
 timer:stop()
 print("seq", timer:elapsed())

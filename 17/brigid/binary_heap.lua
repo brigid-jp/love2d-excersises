@@ -80,7 +80,6 @@ function class:count()
 end
 
 function class:push(u)
-  local comp = self.comp
   local heap = self.heap
   local index = self.index
   local value = self.value
@@ -94,7 +93,7 @@ function class:push(u)
   self.n = i
   self.m = p
 
-  up_heap(comp, heap, index, value, i, p, u)
+  up_heap(self.comp, heap, index, value, i, p, u)
 
   return p
 end
@@ -104,13 +103,13 @@ function class:peek()
 end
 
 function class:pop()
-  local comp = self.comp
   local heap = self.heap
-  local index = self.index
-  local value = self.value
 
   local p = heap[1]
   if p then
+    local index = self.index
+    local value = self.value
+
     local j = self.n
     local q = heap[j]
     local u = value[p]
@@ -122,7 +121,7 @@ function class:pop()
     value[p] = nil
     self.n = j - 1
 
-    down_heap(comp, heap, index, value, 1, q, value[q])
+    down_heap(self.comp, heap, index, value, 1, q, value[q])
 
     return u
   else
@@ -135,7 +134,6 @@ function class:get(p)
 end
 
 function class:remove(p)
-  local comp = self.comp
   local heap = self.heap
   local index = self.index
   local value = self.value
@@ -150,6 +148,8 @@ function class:remove(p)
     value[p] = nil
     self.n = j - 1
   else
+    local comp = self.comp
+
     local q = heap[j]
     local v = value[q]
 
@@ -170,7 +170,6 @@ end
 
 function class:update(p, u)
   local comp = self.comp
-  local heap = self.heap
   local index = self.index
   local value = self.value
 
@@ -180,11 +179,13 @@ function class:update(p, u)
   if u then
     value[p] = u
     if comp(u, v) then
-      up_heap(comp, heap, index, value, i, p, u)
+      up_heap(comp, self.heap, index, value, i, p, u)
     else
-      down_heap(comp, heap, index, value, i, p, u)
+      down_heap(comp, self.heap, index, value, i, p, u)
     end
   else
+    local heap = self.heap
+
     if not down_heap(comp, heap, index, value, i, p, v) then
       up_heap(comp, heap, index, value, i, p, v)
     end
