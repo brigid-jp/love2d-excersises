@@ -26,8 +26,6 @@ function class:cancel()
 end
 
 function class:run(task)
-  task:run(self)
-
   self.status = "active"
   self.task = task
   self.intr_channel:clear()

@@ -76,6 +76,8 @@ local function run(self)
     end
     local task = task_queue:pop()
     task.task_handle = nil
+    task.status = "running"
+    task.thread = thread
     thread:run(task)
   end
 end
