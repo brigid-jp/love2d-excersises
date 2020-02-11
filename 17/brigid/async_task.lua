@@ -16,18 +16,8 @@ end
 local class = {}
 local metatable = { __index = class }
 
-function class:compare_task_id(that)
-  return self.task_id < that.task_id
-end
-
 function class:cancel()
-  local status = self.status
-  if status == "pending" then
-    self.service:cancel(self)
-    self:set_ready("failure", "canceled")
-  elseif status == "running" then
-    self.service:cancel(self)
-  end
+  self.service:cancel(self)
 end
 
 function class:run(thread)

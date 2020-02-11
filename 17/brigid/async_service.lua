@@ -14,6 +14,10 @@ local queue = require "brigid.queue"
 
 local unpack = table.unpack or unpack
 
+local function compare_task(a, b)
+  return a.task_id < b.task_id
+end
+
 local function new_thread(self)
   local thread_id = self.thread_id + 1
   self.thread_id = thread_id
@@ -47,7 +51,7 @@ local function new(start_threads, max_threads, max_spare_threads)
     thread_queue = thread_queue;
     thread_count = 0;
     task_id = 0;
-    task_queue = binary_heap(async_task.compare_task_id);
+    task_queue = binary_heap(compare_task);
   }
 
   for i = 1, start_threads do
@@ -70,7 +74,9 @@ local function run(self)
         break
       end
     end
-    thread:run(task_queue:pop())
+    local task = task_queue:pop()
+    task.task_handle = nil
+    thread:run(task)
   end
 end
 
@@ -125,11 +131,13 @@ function class:update()
 end
 
 function class:cancel(task)
-  local thread = task.thread
-  if thread then
-    thread:cancel()
-  else
+  local status = task.status
+  if status == "pending" then
     self.task_queue:remove(task.task_handle)
+    task.task_handle = nil
+    task:set_ready("failure", "canceled")
+  elseif status == "running" then
+    task.thread:cancel()
   end
 end
 
