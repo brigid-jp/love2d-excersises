@@ -62,21 +62,15 @@ local function run(self)
   local task_queue = self.task_queue
 
   while not task_queue:empty() do
-    local task = task_queue:peek()
-    if task.status == "pending" then
-      local thread = thread_queue:pop()
-      if not thread then
-        if self.thread_count < self.max_threads then
-          thread = new_thread(self)
-        else
-          break
-        end
+    local thread = thread_queue:pop()
+    if not thread then
+      if self.thread_count < self.max_threads then
+        thread = new_thread(self)
+      else
+        break
       end
-      task_queue:pop()
-      thread:run(task)
-    else
-      task_queue:pop()
     end
+    thread:run(task_queue:pop())
   end
 end
 
@@ -84,8 +78,9 @@ local function new_task(self, ...)
   local task_id = self.task_id + 1
   self.task_id = task_id
 
-  local task = async_task(task_id, ...)
-  self.task_queue:push(task)
+  local task = async_task(self, task_id, ...)
+  local task_handle = self.task_queue:push(task)
+  task.task_handle = task_handle
   run(self)
   return task
 end
@@ -126,6 +121,15 @@ function class:update()
     end
   else
     run(self)
+  end
+end
+
+function class:cancel(task)
+  local thread = task.thread
+  if thread then
+    thread:cancel()
+  else
+    self.task_queue:remove(task.task_handle)
   end
 end
 

@@ -4,8 +4,9 @@
 
 local unpack = table.unpack or unpack
 
-local function new(task_id, ...)
+local function new(service, task_id, ...)
   return {
+    service = service;
     task_id = task_id;
     action = { ... };
     status = "pending";
@@ -22,9 +23,10 @@ end
 function class:cancel()
   local status = self.status
   if status == "pending" then
+    self.service:cancel(self)
     self:set_ready("failure", "canceled")
   elseif status == "running" then
-    self.thread:cancel()
+    self.service:cancel(self)
   end
 end
 

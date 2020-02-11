@@ -13,7 +13,7 @@ local n = 0
 local coro
 
 function love.load()
-  service = async_service(0, 4, 2)
+  service = async_service(0, 2, 2)
 
   local coro = coroutine.create(function ()
     print "coro start"
