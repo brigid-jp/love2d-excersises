@@ -20,10 +20,6 @@ function class:cancel()
   self.service:cancel(self)
 end
 
-function class:set_progress(...)
-  self.progress = { ... }
-end
-
 function class:set_ready(status, ...)
   self.status = status
   self.thread = nil

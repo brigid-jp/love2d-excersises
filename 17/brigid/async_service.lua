@@ -115,7 +115,7 @@ function class:update()
       self.thread_count = self.thread_count - 1
       thread:wait()
     elseif status == "progress" then
-      thread:set_progress(unpack(message, 3))
+      thread.task.progress = { unpack(message, 3) }
     else
       thread:set_ready(status, unpack(message, 3))
       thread_queue:push(thread)

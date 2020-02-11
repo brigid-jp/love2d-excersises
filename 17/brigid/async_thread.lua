@@ -32,10 +32,6 @@ function class:run(task)
   self.send_channel:push(task.action)
 end
 
-function class:set_progress(...)
-  self.task:set_progress(...)
-end
-
 function class:set_ready(...)
   local task = self.task
 
