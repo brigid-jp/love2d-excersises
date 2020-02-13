@@ -4,6 +4,16 @@
 
 local unpack = table.unpack or unpack
 
+-- service     : service
+-- task_id     : identifier
+-- action      : {}
+-- status      : "..."
+-- task_handle : handle
+--
+-- thread      : thread
+-- result      : {}
+-- caller      : coroutine
+
 local function new(service, task_id, ...)
   return {
     service = service;
@@ -20,12 +30,23 @@ function class:cancel()
   self.service:cancel(self)
 end
 
+function class:run(thread)
+  self.status = "running"
+  self.thread = thread
+end
+
+function class:set_progress(...)
+  self.progress = { ... }
+end
+
 function class:set_ready(status, ...)
+  local caller = self.caller
+
   self.status = status
   self.thread = nil
   self.result = { ... }
+  self.caller = nil
 
-  local caller = self.caller
   if caller then
     assert(coroutine.resume(self.caller, "ready"))
   end

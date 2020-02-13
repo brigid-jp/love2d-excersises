@@ -76,8 +76,7 @@ local function run(self)
     end
     local task = task_queue:pop()
     task.task_handle = nil
-    task.status = "running"
-    task.thread = thread
+    task:run(thread)
     thread:run(task)
   end
 end
@@ -87,8 +86,7 @@ local function new_task(self, ...)
   self.task_id = task_id
 
   local task = async_task(self, task_id, ...)
-  local task_handle = self.task_queue:push(task)
-  task.task_handle = task_handle
+  task.task_handle = self.task_queue:push(task)
   run(self)
   return task
 end
@@ -115,10 +113,12 @@ function class:update()
       self.thread_count = self.thread_count - 1
       thread:wait()
     elseif status == "progress" then
-      thread.task.progress = { unpack(message, 3) }
+      thread.task:set_progress(unpack(message, 3))
     else
-      thread:set_ready(status, unpack(message, 3))
+      local task = thread.task
+      thread.task = nil
       thread_queue:push(thread)
+      task:set_ready(status, unpack(message, 3))
     end
   end
 
