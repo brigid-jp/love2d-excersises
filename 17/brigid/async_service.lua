@@ -59,6 +59,24 @@ local function new(start_threads, max_threads, max_spare_threads)
   return self
 end
 
+local function push_task(self, task)
+  task.task_handle = self.task_queue:push(task)
+end
+
+local function pop_task(self)
+  local task = self.task_queue:pop()
+  task.task_handle = nil
+  return task
+end
+
+local function remove_task(self, task)
+  local task_handle = task.task_handle
+  if task_handle then
+    task.task_handle = nil
+    self.task_queue:remove(task_handle)
+  end
+end
+
 local function run(self)
   local thread_queue = self.thread_queue
   local task_queue = self.task_queue
@@ -72,9 +90,7 @@ local function run(self)
         break
       end
     end
-    local task = task_queue:pop()
-    task.task_handle = nil
-    thread:run(task)
+    thread:run(pop_task(self))
   end
 end
 
@@ -83,9 +99,27 @@ local function new_task(self, ...)
   self.task_id = task_id
 
   local task = async_task(self, task_id, ...)
-  task.task_handle = self.task_queue:push(task)
+  push_task(self, task)
   run(self)
   return task
+end
+
+local function push_timer(self, task)
+  task.timer_handle = self.timer_queue:push(task)
+end
+
+local function pop_timer(self)
+  local task = self.timer_queue:pop()
+  task.timer_handle = nil
+  return task
+end
+
+local function remove_timer(self, task)
+  local timer_handle = task.timer_handle
+  if timer_handle then
+    task.timer_handle = nil
+    self.timer_queue:remove(timer_handle)
+  end
 end
 
 local class = {}
@@ -95,7 +129,6 @@ function class:update()
   local recv_channel = self.recv_channel
   local thread_table = self.thread_table
   local thread_queue = self.thread_queue
-  local task_queue = self.task_queue
   local timer_queue = self.timer_queue
 
   while true do
@@ -133,28 +166,23 @@ function class:update()
     if task.timer > timer then
       break
     end
-    timer_queue:pop()
+    pop_timer(self)
     task.timer_handle = nil
     task:set_timeout()
   end
 end
 
 function class:cancel(task)
-  self.task_queue:remove(task.task_handle)
-  task.task_handle = nil
-  self:remove_timer(task)
+  remove_task(self)
+  remove_timer(self, task)
 end
 
 function class:push_timer(task)
-  task.timer_handle = self.timer_queue:push(task)
+  push_timer(self, task)
 end
 
 function class:remove_timer(task)
-  local timer_handle = self.timer_handle
-  if timer_handle then
-    self.timer_handle = nil
-    self.timer_queue:remove(timer_handle)
-  end
+  remove_timer(self, task)
 end
 
 function class:sleep(...)
