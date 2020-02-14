@@ -11,7 +11,6 @@ local love = {
 local async_task = require "brigid.async_task"
 local async_thread = require "brigid.async_thread"
 local binary_heap = require "brigid.binary_heap"
-local intrusive_binary_heap = require "brigid.intrusive_binary_heap"
 local queue = require "brigid.queue"
 
 local unpack = table.unpack or unpack
@@ -49,8 +48,8 @@ local function new(start_threads, max_threads, max_spare_threads)
     thread_queue = thread_queue;
     thread_count = 0;
     task_id = 0;
-    task_queue = intrusive_binary_heap(async_task.compare_task_id, "task_handle");
-    timer_queue = intrusive_binary_heap(async_task.compare_timer, "timer_handle");
+    task_queue = binary_heap(async_task.compare_task_id, function (task) return task.task_handle end, function (task, handle) task.task_handle = handle end);
+    timer_queue = binary_heap(async_task.compare_timer, function (task) return task.timer_handle end, function (task, handle) task.timer_handle = handle end);
   }
 
   for i = 1, start_threads do

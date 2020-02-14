@@ -2,6 +2,35 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
+local function new(comp, get_handle, set_handle)
+  if comp == nil then
+    comp = function (a, b)
+      return a > b
+    end
+  end
+
+  if get_handle == nil then
+    get_handle = function (a)
+      return a
+    end
+  end
+
+  if set_handle == nil then
+    set_handle = function () end
+  end
+
+  return {
+    comp = comp;
+    heap = {};
+    index = {};
+    value = {};
+    n = 0;
+    m = 0;
+    get_handle = get_handle;
+    set_handle = set_handle;
+  }
+end
+
 local function up_heap(comp, heap, index, value, i, p, u)
   while i > 1 do
     local j = (i - i % 2) / 2
@@ -54,23 +83,6 @@ end
 local class = {}
 local metatable = { __index = class }
 
-function class.new(comp)
-  if comp == nil then
-    comp = function (a, b)
-      return a > b
-    end
-  end
-
-  return {
-    comp = comp;
-    heap = {};
-    index = {};
-    value = {};
-    n = 0;
-    m = 0;
-  }
-end
-
 function class:empty()
   return self.n == 0
 end
@@ -95,6 +107,7 @@ function class:push(u)
 
   up_heap(self.comp, heap, index, value, i, p, u)
 
+  self.set_handle(u, p)
   return p
 end
 
@@ -123,6 +136,7 @@ function class:pop()
 
     down_heap(self.comp, heap, index, value, 1, q, value[q])
 
+    self.set_handle(u, nil)
     return u
   else
     return nil
@@ -137,6 +151,11 @@ function class:remove(p)
   local heap = self.heap
   local index = self.index
   local value = self.value
+
+  local p = self.get_handle(p)
+  if not p then
+    return nil
+  end
 
   local i = index[p]
   local j = self.n
@@ -165,6 +184,7 @@ function class:remove(p)
     end
   end
 
+  self.set_handle(u, nil)
   return u
 end
 
@@ -193,6 +213,6 @@ end
 
 return setmetatable(class, {
   __call = function (_, ...)
-    return setmetatable(class.new(...), metatable)
+    return setmetatable(new(...), metatable)
   end;
 })
