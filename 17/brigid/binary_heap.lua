@@ -196,4 +196,3 @@ return setmetatable(class, {
     return setmetatable(new(...), metatable)
   end;
 })
-
