@@ -76,7 +76,6 @@ local function run(self)
     end
     local task = task_queue:pop()
     task.task_handle = nil
-    task:run(thread)
     thread:run(task)
   end
 end
@@ -113,12 +112,10 @@ function class:update()
       self.thread_count = self.thread_count - 1
       thread:wait()
     elseif status == "progress" then
-      thread.task:set_progress(unpack(message, 3))
+      thread:set_progress(unpack(message, 3))
     else
-      local task = thread.task
-      thread.task = nil
+      thread:set_ready(status, unpack(message, 3))
       thread_queue:push(thread)
-      task:set_ready(status, unpack(message, 3))
     end
   end
 
@@ -133,14 +130,8 @@ function class:update()
 end
 
 function class:cancel(task)
-  local status = task.status
-  if status == "pending" then
-    self.task_queue:remove(task.task_handle)
-    task.task_handle = nil
-    task:set_ready("failure", "canceled")
-  elseif status == "running" then
-    task.thread:cancel()
-  end
+  self.task_queue:remove(task.task_handle)
+  task.task_handle = nil
 end
 
 function class:sleep(...)

@@ -4,16 +4,6 @@
 
 local unpack = table.unpack or unpack
 
--- service     : service
--- task_id     : identifier
--- action      : {}
--- status      : "..."
--- task_handle : handle
---
--- thread      : thread
--- result      : {}
--- caller      : coroutine
-
 local function new(service, task_id, ...)
   return {
     service = service;
@@ -27,12 +17,23 @@ local class = {}
 local metatable = { __index = class }
 
 function class:cancel()
-  self.service:cancel(self)
+  local status = self.status
+  if status == "pending" then
+    self.service:cancel(self)
+    self:set_ready("failure", "canceled")
+  elseif status == "running" then
+    self.thread:cancel()
+  end
 end
 
 function class:run(thread)
+  local action = self.action
+
+  self.action = nil
   self.status = "running"
   self.thread = thread
+
+  return action
 end
 
 function class:set_progress(...)

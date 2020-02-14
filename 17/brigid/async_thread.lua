@@ -2,14 +2,6 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
--- thread_id    : identifier
--- thread       : love.thread
--- intr_channel : love.channel
--- send_channel : love.channel
--- task         : task
---
--- active -> idle
-
 local function new(thread_id, recv_channel)
   local thread = love.thread.newThread "brigid/async_thread_impl.lua"
   local intr_channel = love.thread.newChannel()
@@ -33,9 +25,23 @@ function class:cancel()
 end
 
 function class:run(task)
+  local action = task:run(self)
+
   self.task = task
   self.intr_channel:clear()
-  self.send_channel:push(task.action)
+  self.send_channel:push(action)
+end
+
+function class:set_progress(...)
+  self.task:set_progress(...)
+end
+
+function class:set_ready(...)
+  local task = self.task
+
+  self.task = nil
+
+  task:set_ready(...)
 end
 
 function class:close()
