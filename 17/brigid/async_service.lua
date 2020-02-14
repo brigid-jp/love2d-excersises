@@ -5,6 +5,7 @@
 local love = {
   system = require "love.system";
   thread = require "love.thread";
+  timer = require "love.timer";
 }
 
 local async_task = require "brigid.async_task"
@@ -13,10 +14,6 @@ local binary_heap = require "brigid.binary_heap"
 local queue = require "brigid.queue"
 
 local unpack = table.unpack or unpack
-
-local function compare_task(a, b)
-  return a.task_id < b.task_id
-end
 
 local function new_thread(self)
   local thread_id = self.thread_id + 1
@@ -51,7 +48,8 @@ local function new(start_threads, max_threads, max_spare_threads)
     thread_queue = thread_queue;
     thread_count = 0;
     task_id = 0;
-    task_queue = binary_heap(compare_task);
+    task_queue = binary_heap(async_task.compare_task_id);
+    timer_queue = binary_heap(async_task.compare_timer);
   }
 
   for i = 1, start_threads do
@@ -97,6 +95,8 @@ function class:update()
   local recv_channel = self.recv_channel
   local thread_table = self.thread_table
   local thread_queue = self.thread_queue
+  local task_queue = self.task_queue
+  local timer_queue = self.timer_queue
 
   while true do
     local message = recv_channel:pop()
@@ -120,18 +120,41 @@ function class:update()
   end
 
   if self.task_queue:empty() then
-    local thread_queue = self.thread_queue
     for i = 1, thread_queue:count() - self.max_spare_threads do
       thread_queue:pop():close()
     end
   else
     run(self)
   end
+
+  local timer = love.timer.getTime()
+  while not timer_queue:empty() do
+    local task = timer_queue:peek()
+    if task.timer > timer then
+      break
+    end
+    timer_queue:pop()
+    task.timer_handle = nil
+    task:set_timeout()
+  end
 end
 
 function class:cancel(task)
   self.task_queue:remove(task.task_handle)
   task.task_handle = nil
+  self:remove_timer(task)
+end
+
+function class:push_timer(task)
+  task.timer_handle = self.timer_queue:push(task)
+end
+
+function class:remove_timer(task)
+  local timer_handle = self.timer_handle
+  if timer_handle then
+    self.timer_handle = nil
+    self.timer_queue:remove(timer_handle)
+  end
 end
 
 function class:sleep(...)

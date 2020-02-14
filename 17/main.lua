@@ -7,6 +7,8 @@ local W = love.window
 
 local async_service = require "brigid.async_service"
 
+local unpack = table.unpack or unpack
+
 local service
 local tasks = {}
 local n = 0
@@ -27,6 +29,28 @@ function love.load()
     end
   end)
   -- coroutine.resume(coro)
+
+  local coro = coroutine.create(function ()
+    print("coro start")
+    local future = service:sleep(3)
+    local r = future:wait_for(1)
+    print("wait_for(1)", r)
+    local r = future:wait_for(1)
+    print("wait_for(1)", r)
+    local r = future:wait_for(2)
+    print("wait_for(1)", r)
+    local r = future:get()
+    print("get()", r)
+
+    local future = service:sleep(3)
+    local r = future:wait_for(1)
+    print("wait_for(1)", r)
+    future:cancel()
+    local r, msg = pcall(function () return future:get() end)
+    assert(not r)
+    print("get()", msg)
+  end)
+  coroutine.resume(coro)
 
   -- service:dispatch(function ()
   --   local future = service:sleep(2)

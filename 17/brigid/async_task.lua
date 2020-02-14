@@ -2,6 +2,10 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
+local love = {
+  timer = require "love.timer";
+}
+
 local unpack = table.unpack or unpack
 
 local function new(service, task_id, ...)
@@ -15,6 +19,14 @@ end
 
 local class = {}
 local metatable = { __index = class }
+
+function class:compare_task_id(that)
+  return self.task_id < that.task_id
+end
+
+function class:compare_timer(that)
+  return self.timer < that.timer
+end
 
 function class:cancel()
   local status = self.status
@@ -48,8 +60,20 @@ function class:set_ready(status, ...)
   self.result = { ... }
   self.caller = nil
 
+  self.service:remove_timer(self)
+
   if caller then
-    assert(coroutine.resume(self.caller, "ready"))
+    assert(coroutine.resume(caller, "ready"))
+  end
+end
+
+function class:set_timeout()
+  local caller = self.caller
+
+  self.caller = nil
+
+  if caller then
+    assert(coroutine.resume(caller, "timeout"))
   end
 end
 
@@ -58,6 +82,18 @@ function class:wait()
   if status == "success" or status == "failure" then
     return "ready"
   else
+    self.caller = coroutine.running()
+    return coroutine.yield()
+  end
+end
+
+function class:wait_for(timer)
+  local status = self.status
+  if status == "success" or status == "failure" then
+    return "ready"
+  else
+    self.timer = love.timer.getTime() + timer
+    self.service:push_timer(self)
     self.caller = coroutine.running()
     return coroutine.yield()
   end
