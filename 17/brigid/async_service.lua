@@ -11,6 +11,7 @@ local love = {
 local async_task = require "brigid.async_task"
 local async_thread = require "brigid.async_thread"
 local binary_heap = require "brigid.binary_heap"
+local intrusive_binary_heap = require "brigid.intrusive_binary_heap"
 local queue = require "brigid.queue"
 
 local unpack = table.unpack or unpack
@@ -48,8 +49,8 @@ local function new(start_threads, max_threads, max_spare_threads)
     thread_queue = thread_queue;
     thread_count = 0;
     task_id = 0;
-    task_queue = binary_heap(async_task.compare_task_id);
-    timer_queue = binary_heap(async_task.compare_timer);
+    task_queue = intrusive_binary_heap(async_task.compare_task_id, "task_handle");
+    timer_queue = intrusive_binary_heap(async_task.compare_timer, "timer_handle");
   }
 
   for i = 1, start_threads do
@@ -57,24 +58,6 @@ local function new(start_threads, max_threads, max_spare_threads)
   end
 
   return self
-end
-
-local function push_task(self, task)
-  task.task_handle = self.task_queue:push(task)
-end
-
-local function pop_task(self)
-  local task = self.task_queue:pop()
-  task.task_handle = nil
-  return task
-end
-
-local function remove_task(self, task)
-  local task_handle = task.task_handle
-  if task_handle then
-    task.task_handle = nil
-    self.task_queue:remove(task_handle)
-  end
 end
 
 local function run(self)
@@ -90,7 +73,7 @@ local function run(self)
         break
       end
     end
-    thread:run(pop_task(self))
+    thread:run(task_queue:pop())
   end
 end
 
@@ -99,27 +82,9 @@ local function new_task(self, ...)
   self.task_id = task_id
 
   local task = async_task(self, task_id, ...)
-  push_task(self, task)
+  self.task_queue:push(task)
   run(self)
   return task
-end
-
-local function push_timer(self, task)
-  task.timer_handle = self.timer_queue:push(task)
-end
-
-local function pop_timer(self)
-  local task = self.timer_queue:pop()
-  task.timer_handle = nil
-  return task
-end
-
-local function remove_timer(self, task)
-  local timer_handle = task.timer_handle
-  if timer_handle then
-    task.timer_handle = nil
-    self.timer_queue:remove(timer_handle)
-  end
 end
 
 local class = {}
@@ -166,23 +131,22 @@ function class:update()
     if task.timer > timer then
       break
     end
-    pop_timer(self)
-    task.timer_handle = nil
+    timer_queue:pop()
     task:set_timeout()
   end
 end
 
 function class:cancel(task)
-  remove_task(self)
-  remove_timer(self, task)
+  self.task_queue:remove(task)
+  self.timer_queue:remove(task)
 end
 
 function class:push_timer(task)
-  push_timer(self, task)
+  self.timer_queue:push(task)
 end
 
 function class:remove_timer(task)
-  remove_timer(self, task)
+  self.timer_queue:remove(task)
 end
 
 function class:sleep(...)

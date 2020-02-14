@@ -2,23 +2,6 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
-local function new(comp)
-  if comp == nil then
-    comp = function (a, b)
-      return a > b
-    end
-  end
-
-  return {
-    comp = comp;
-    heap = {};
-    index = {};
-    value = {};
-    n = 0;
-    m = 0;
-  }
-end
-
 local function up_heap(comp, heap, index, value, i, p, u)
   while i > 1 do
     local j = (i - i % 2) / 2
@@ -70,6 +53,23 @@ end
 
 local class = {}
 local metatable = { __index = class }
+
+function class.new(comp)
+  if comp == nil then
+    comp = function (a, b)
+      return a > b
+    end
+  end
+
+  return {
+    comp = comp;
+    heap = {};
+    index = {};
+    value = {};
+    n = 0;
+    m = 0;
+  }
+end
 
 function class:empty()
   return self.n == 0
@@ -193,6 +193,6 @@ end
 
 return setmetatable(class, {
   __call = function (_, ...)
-    return setmetatable(new(...), metatable)
+    return setmetatable(class.new(...), metatable)
   end;
 })
