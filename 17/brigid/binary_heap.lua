@@ -2,25 +2,25 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
-local function new(comp, get_handle, set_handle)
-  if comp == nil then
-    comp = function (a, b)
+local function new(compare, get_handle, set_handle)
+  if not compare then
+    compare = function (a, b)
       return a > b
     end
   end
 
-  if get_handle == nil then
-    get_handle = function (a)
-      return a
+  if not get_handle then
+    get_handle = function (p)
+      return p
     end
   end
 
-  if set_handle == nil then
+  if not set_handle then
     set_handle = function () end
   end
 
   return {
-    comp = comp;
+    compare = compare;
     heap = {};
     index = {};
     value = {};
@@ -31,12 +31,12 @@ local function new(comp, get_handle, set_handle)
   }
 end
 
-local function up_heap(comp, heap, index, value, i, p, u)
+local function up_heap(compare, heap, index, value, i, p, u)
   while i > 1 do
     local j = (i - i % 2) / 2
     local q = heap[j]
     local v = value[q]
-    if comp(u, v) then
+    if compare(u, v) then
       heap[i] = q
       heap[j] = p
       index[p] = j
@@ -48,7 +48,7 @@ local function up_heap(comp, heap, index, value, i, p, u)
   end
 end
 
-local function down_heap(comp, heap, index, value, i, p, u)
+local function down_heap(compare, heap, index, value, i, p, u)
   local result = false
   local j = i * 2
   local q = heap[j]
@@ -58,13 +58,13 @@ local function down_heap(comp, heap, index, value, i, p, u)
     local r = heap[k]
     if r then
       local w = value[r]
-      if comp(w, v) then
+      if compare(w, v) then
         j = k
         q = r
         v = w
       end
     end
-    if comp(v, u) then
+    if compare(v, u) then
       heap[i] = q
       heap[j] = p
       index[p] = j
@@ -105,7 +105,7 @@ function class:push(u)
   self.n = i
   self.m = p
 
-  up_heap(self.comp, heap, index, value, i, p, u)
+  up_heap(self.compare, heap, index, value, i, p, u)
 
   self.set_handle(u, p)
   return p
@@ -134,17 +134,13 @@ function class:pop()
     value[p] = nil
     self.n = j - 1
 
-    down_heap(self.comp, heap, index, value, 1, q, value[q])
+    down_heap(self.compare, heap, index, value, 1, q, value[q])
 
     self.set_handle(u, nil)
     return u
   else
     return nil
   end
-end
-
-function class:get(p)
-  return self.value[p]
 end
 
 function class:remove(p)
@@ -167,7 +163,7 @@ function class:remove(p)
     value[p] = nil
     self.n = j - 1
   else
-    local comp = self.comp
+    local compare = self.compare
 
     local q = heap[j]
     local v = value[q]
@@ -179,8 +175,8 @@ function class:remove(p)
     value[p] = nil
     self.n = j - 1
 
-    if not down_heap(comp, heap, index, value, i, q, v) then
-      up_heap(comp, heap, index, value, i, q, v)
+    if not down_heap(compare, heap, index, value, i, q, v) then
+      up_heap(compare, heap, index, value, i, q, v)
     end
   end
 
@@ -188,8 +184,12 @@ function class:remove(p)
   return u
 end
 
+function class:get(p)
+  return self.value[p]
+end
+
 function class:update(p, u)
-  local comp = self.comp
+  local compare = self.compare
   local index = self.index
   local value = self.value
 
@@ -198,15 +198,15 @@ function class:update(p, u)
 
   if u == nil then
     local heap = self.heap
-    if not down_heap(comp, heap, index, value, i, p, v) then
-      up_heap(comp, heap, index, value, i, p, v)
+    if not down_heap(compare, heap, index, value, i, p, v) then
+      up_heap(compare, heap, index, value, i, p, v)
     end
   else
     value[p] = u
-    if comp(u, v) then
-      up_heap(comp, self.heap, index, value, i, p, u)
+    if compare(u, v) then
+      up_heap(compare, self.heap, index, value, i, p, u)
     else
-      down_heap(comp, self.heap, index, value, i, p, u)
+      down_heap(compare, self.heap, index, value, i, p, u)
     end
   end
 end
