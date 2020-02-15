@@ -10,8 +10,8 @@ local function new(compare, get_handle, set_handle)
   end
 
   if not get_handle then
-    get_handle = function (p)
-      return p
+    get_handle = function (a)
+      return a
     end
   end
 
@@ -21,13 +21,13 @@ local function new(compare, get_handle, set_handle)
 
   return {
     compare = compare;
+    get_handle = get_handle;
+    set_handle = set_handle;
     heap = {};
     index = {};
     value = {};
     n = 0;
     m = 0;
-    get_handle = get_handle;
-    set_handle = set_handle;
   }
 end
 
@@ -119,39 +119,48 @@ function class:pop()
   local heap = self.heap
 
   local p = heap[1]
-  if p then
-    local index = self.index
-    local value = self.value
-
-    local j = self.n
-    local q = heap[j]
-    local u = value[p]
-
-    heap[1] = q
-    heap[j] = nil
-    index[p] = nil
-    index[q] = 1
-    value[p] = nil
-    self.n = j - 1
-
-    down_heap(self.compare, heap, index, value, 1, q, value[q])
-
-    self.set_handle(u, nil)
-    return u
-  else
+  if not p then
     return nil
   end
-end
 
-function class:remove(p)
-  local heap = self.heap
   local index = self.index
   local value = self.value
 
+  local j = self.n
+  local q = heap[j]
+  local u = value[p]
+
+  heap[1] = q
+  heap[j] = nil
+  index[p] = nil
+  index[q] = 1
+  value[p] = nil
+  self.n = j - 1
+
+  down_heap(self.compare, heap, index, value, 1, q, value[q])
+
+  self.set_handle(u, nil)
+  return u
+end
+
+function class:get(p)
   local p = self.get_handle(p)
   if not p then
     return nil
   end
+
+  return self.value[p]
+end
+
+function class:remove(p)
+  local p = self.get_handle(p)
+  if not p then
+    return nil
+  end
+
+  local heap = self.heap
+  local index = self.index
+  local value = self.value
 
   local i = index[p]
   local j = self.n
@@ -184,11 +193,12 @@ function class:remove(p)
   return u
 end
 
-function class:get(p)
-  return self.value[p]
-end
-
 function class:update(p, u)
+  local p = self.get_handle(p)
+  if not p then
+    return false
+  end
+
   local compare = self.compare
   local index = self.index
   local value = self.value
@@ -209,6 +219,8 @@ function class:update(p, u)
       down_heap(compare, self.heap, index, value, i, p, u)
     end
   end
+
+  return true
 end
 
 return setmetatable(class, {
