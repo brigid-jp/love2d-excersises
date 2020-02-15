@@ -39,7 +39,7 @@ local function set_pending_task_handle(task, handle)
 end
 
 local function compare_waiting_task(a, b)
-  return a.timer < b.timer
+  return a.timeout < b.timeout
 end
 
 local function get_waiting_task_handle(task)
@@ -148,28 +148,15 @@ function class:update()
     run(self)
   end
 
-  local timer = love.timer.getTime()
+  local current_time = love.timer.getTime()
   while not waiting_tasks:empty() do
     local task = waiting_tasks:peek()
-    if task.timer > timer then
+    if task.timeout > current_time then
       break
     end
     waiting_tasks:pop()
     task:set_timeout()
   end
-end
-
-function class:cancel(task)
-  self.pending_tasks:remove(task)
-  self.waiting_tasks:remove(task)
-end
-
-function class:push_timer(task)
-  self.waiting_tasks:push(task)
-end
-
-function class:remove_timer(task)
-  self.waiting_tasks:remove(task)
 end
 
 function class:sleep(...)

@@ -23,7 +23,9 @@ local metatable = { __index = class }
 function class:cancel()
   local status = self.status
   if status == "pending" then
-    self.service:cancel(self)
+    local service = self.service
+    service.pending_tasks:remove(self)
+    service.waiting_tasks:remove(self)
     self:set_ready("failure", "canceled")
   elseif status == "running" then
     self.thread:cancel()
@@ -52,7 +54,7 @@ function class:set_ready(status, ...)
   self.result = { ... }
   self.caller = nil
 
-  self.service:remove_timer(self)
+  self.service.waiting_tasks:remove(self)
 
   if caller then
     assert(coroutine.resume(caller, "ready"))
@@ -79,13 +81,13 @@ function class:wait()
   end
 end
 
-function class:wait_for(timer)
+function class:wait_for(timeout)
   local status = self.status
   if status == "success" or status == "failure" then
     return "ready"
   else
-    self.timer = love.timer.getTime() + timer
-    self.service:push_timer(self)
+    self.timeout = love.timer.getTime() + timeout
+    self.service.waiting_tasks:push(self)
     self.caller = coroutine.running()
     return coroutine.yield()
   end
