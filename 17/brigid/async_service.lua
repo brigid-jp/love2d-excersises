@@ -26,6 +26,30 @@ local function new_thread(self)
   return thread
 end
 
+local function compare_pending_task(a, b)
+  return a.task_id < b.task_id
+end
+
+local function get_pending_task_handle(task)
+  return task.pending_task_handle
+end
+
+local function set_pending_task_handle(task, handle)
+  task.pending_task_handle = handle
+end
+
+local function compare_waiting_task(a, b)
+  return a.timer < b.timer
+end
+
+local function get_waiting_task_handle(task)
+  return task_waiting_task_handle
+end
+
+local function set_waiting_task_handle(task, handle)
+  task_waiting_task_handle = handle
+end
+
 local function new(start_threads, max_threads, max_spare_threads)
   if not start_threads then
     start_threads = love.system.getProcessorCount()
@@ -48,8 +72,8 @@ local function new(start_threads, max_threads, max_spare_threads)
     thread_queue = thread_queue;
     thread_count = 0;
     task_id = 0;
-    pending_tasks = binary_heap(async_task.compare_task_id, function (task) return task.task_handle end, function (task, handle) task.task_handle = handle end);
-    waiting_tasks = binary_heap(async_task.compare_timer, function (task) return task.timer_handle end, function (task, handle) task.timer_handle = handle end);
+    pending_tasks = binary_heap(compare_pending_task, get_pending_task_handle, set_pending_task_handle);
+    waiting_tasks = binary_heap(compare_waiting_task, get_waiting_task_handle, set_waiting_task_handle);
   }
 
   for i = 1, start_threads do
