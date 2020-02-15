@@ -17,6 +17,16 @@ local function new(service, task_id, ...)
   }
 end
 
+local function resume(self, ...)
+  local caller = self.caller
+
+  self.caller = nil
+
+  if caller then
+    assert(coroutine.resume(caller, ...))
+  end
+end
+
 local class = {}
 local metatable = { __index = class }
 
@@ -33,13 +43,9 @@ function class:cancel()
 end
 
 function class:run(thread)
-  local action = self.action
-
-  self.action = nil
   self.status = "running"
   self.thread = thread
-
-  return action
+  return self.action
 end
 
 function class:set_progress(...)
@@ -47,28 +53,17 @@ function class:set_progress(...)
 end
 
 function class:set_ready(status, ...)
-  local caller = self.caller
-
   self.status = status
   self.thread = nil
   self.result = { ... }
-  self.caller = nil
 
   self.service.waiting_tasks:remove(self)
 
-  if caller then
-    assert(coroutine.resume(caller, "ready"))
-  end
+  resume(self, "ready")
 end
 
 function class:set_timeout()
-  local caller = self.caller
-
-  self.caller = nil
-
-  if caller then
-    assert(coroutine.resume(caller, "timeout"))
-  end
+  resume(self, "timeout")
 end
 
 function class:wait()
