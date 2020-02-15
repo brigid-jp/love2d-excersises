@@ -48,8 +48,8 @@ local function new(start_threads, max_threads, max_spare_threads)
     thread_queue = thread_queue;
     thread_count = 0;
     task_id = 0;
-    task_queue = binary_heap(async_task.compare_task_id, function (task) return task.task_handle end, function (task, handle) task.task_handle = handle end);
-    timer_queue = binary_heap(async_task.compare_timer, function (task) return task.timer_handle end, function (task, handle) task.timer_handle = handle end);
+    pending_tasks = binary_heap(async_task.compare_task_id, function (task) return task.task_handle end, function (task, handle) task.task_handle = handle end);
+    waiting_tasks = binary_heap(async_task.compare_timer, function (task) return task.timer_handle end, function (task, handle) task.timer_handle = handle end);
   }
 
   for i = 1, start_threads do
@@ -61,9 +61,9 @@ end
 
 local function run(self)
   local thread_queue = self.thread_queue
-  local task_queue = self.task_queue
+  local pending_tasks = self.pending_tasks
 
-  while not task_queue:empty() do
+  while not pending_tasks:empty() do
     local thread = thread_queue:pop()
     if not thread then
       if self.thread_count < self.max_threads then
@@ -72,7 +72,7 @@ local function run(self)
         break
       end
     end
-    thread:run(task_queue:pop())
+    thread:run(pending_tasks:pop())
   end
 end
 
@@ -81,7 +81,7 @@ local function new_task(self, ...)
   self.task_id = task_id
 
   local task = async_task(self, task_id, ...)
-  self.task_queue:push(task)
+  self.pending_tasks:push(task)
   run(self)
   return task
 end
@@ -93,7 +93,7 @@ function class:update()
   local recv_channel = self.recv_channel
   local thread_table = self.thread_table
   local thread_queue = self.thread_queue
-  local timer_queue = self.timer_queue
+  local waiting_tasks = self.waiting_tasks
 
   while true do
     local message = recv_channel:pop()
@@ -116,7 +116,7 @@ function class:update()
     end
   end
 
-  if self.task_queue:empty() then
+  if self.pending_tasks:empty() then
     for i = 1, thread_queue:count() - self.max_spare_threads do
       thread_queue:pop():close()
     end
@@ -125,27 +125,27 @@ function class:update()
   end
 
   local timer = love.timer.getTime()
-  while not timer_queue:empty() do
-    local task = timer_queue:peek()
+  while not waiting_tasks:empty() do
+    local task = waiting_tasks:peek()
     if task.timer > timer then
       break
     end
-    timer_queue:pop()
+    waiting_tasks:pop()
     task:set_timeout()
   end
 end
 
 function class:cancel(task)
-  self.task_queue:remove(task)
-  self.timer_queue:remove(task)
+  self.pending_tasks:remove(task)
+  self.waiting_tasks:remove(task)
 end
 
 function class:push_timer(task)
-  self.timer_queue:push(task)
+  self.waiting_tasks:push(task)
 end
 
 function class:remove_timer(task)
-  self.timer_queue:remove(task)
+  self.waiting_tasks:remove(task)
 end
 
 function class:sleep(...)
