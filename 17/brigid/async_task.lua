@@ -19,9 +19,7 @@ end
 
 local function resume(self, ...)
   local caller = self.caller
-
   self.caller = nil
-
   if caller then
     assert(coroutine.resume(caller, ...))
   end
@@ -56,9 +54,7 @@ function class:set_ready(status, ...)
   self.status = status
   self.thread = nil
   self.result = { ... }
-
   self.service.waiting_tasks:remove(self)
-
   resume(self, "ready")
 end
 
