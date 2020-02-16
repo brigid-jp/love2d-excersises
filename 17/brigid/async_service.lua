@@ -119,12 +119,9 @@ function class:update()
   local thread_queue = self.thread_queue
   local waiting_tasks = self.waiting_tasks
 
-  while true do
+  local n = recv_channel:getCount()
+  for i = 1, n do
     local message = recv_channel:pop()
-    if not message then
-      break
-    end
-
     local status = message[1]
     local thread_id = message[2]
     local thread = thread_table[thread_id]

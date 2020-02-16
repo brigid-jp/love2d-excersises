@@ -21,7 +21,10 @@ local function resume(self, ...)
   local caller = self.caller
   self.caller = nil
   if caller then
-    assert(coroutine.resume(caller, ...))
+    local result, message = coroutine.resume(caller, ...)
+    if not result then
+      error(message)
+    end
   end
 end
 
