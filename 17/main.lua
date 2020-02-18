@@ -50,7 +50,7 @@ function love.load()
     assert(not r)
     print("get()", msg)
   end)
-  coroutine.resume(coro)
+  -- coroutine.resume(coro)
 
   -- service:dispatch(function ()
   --   local future = service:sleep(2)
@@ -71,13 +71,17 @@ function love.draw()
   buffer[2] = love.timer.getFPS() .. " fps"
   for i = 1, n do
     local task = tasks[i]
+    local status = task.status
+    if status == "failure" then
+      status = status .. " (" .. task.result[1] .. ")"
+    end
     local progress = task.progress
     if progress then
       progress = ("%.2f%%"):format(progress[1] / progress[2] * 100)
     else
       progress = ""
     end
-    buffer[i + 2] = i .. " " .. tostring(task) .. " " .. task.status .. " " .. progress
+    buffer[i + 2] = i .. " " .. tostring(task) .. " " .. status .. " " .. progress
   end
   G.printf(table.concat(buffer, "\n"), x + 24, y + 24, w - 48)
 end
@@ -100,5 +104,12 @@ function love.keyreleased(key)
     if task then
       task:cancel()
     end
+  elseif key == "h" then
+    local url = "http://brigid.jp/pub/mplus-TESTFLIGHT-063a/mplus-1mn-light.ttf"
+    local filename = "mplus-1mn-light.ttf"
+    local size = 1655680
+    local sha256 = "\034\128\177\205\031\119\013\144\179\214\072\088\137\142\089\156\238\202\049\011\087\071\004\149\086\050\048\100\162\133\121\058"
+    n = n + 1
+    tasks[n] = service:luasocket_download(url, filename, size, sha256)
   end
 end

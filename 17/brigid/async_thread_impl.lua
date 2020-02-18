@@ -7,6 +7,10 @@ local love = {
 }
 local async_promise = require "brigid.async_promise"
 
+local tasks = {
+  luasocket_download = require "brigid.luasocket_download";
+}
+
 local thread_id, send_channel, intr_channel, recv_channel = ...
 
 while true do
@@ -19,13 +23,13 @@ while true do
     if action == "sleep" then
       promise:dispatch(function (s)
         local n = 100
-        promise:progress(0, n)
+        promise:set_progress(0, n)
         for i = 1, n do
           if promise:check_canceled() then
             error "canceled"
           end
           love.timer.sleep(s / n)
-          promise:progress(i, n)
+          promise:set_progress(i, n)
         end
         return 42
       end, message[2])
@@ -34,6 +38,11 @@ while true do
         love.timer.sleep(s)
         return 69
       end, message[2])
+    else
+      local task = tasks[action]
+      if task then
+        promise:dispatch(task, promise, unpack(message, 2))
+      end
     end
   end
 end

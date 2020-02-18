@@ -171,6 +171,10 @@ function class:sleep2(...)
   return new_task(self, "sleep2", ...)
 end
 
+function class:luasocket_download(...)
+  return new_task(self, "luasocket_download", ...)
+end
+
 return setmetatable(class, {
   __call = function (_, ...)
     return setmetatable(new(...), metatable)

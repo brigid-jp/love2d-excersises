@@ -21,7 +21,7 @@ end
 local class = {}
 local metatable = { __index = class }
 
-function class:progress(...)
+function class:set_progress(...)
   self.send_channel:push { "progress", self.thread_id, ... }
 end
 
