@@ -6,6 +6,8 @@ local love = {
   system = require "love.system";
 }
 
+local async_service = require "brigid.async_service"
+
 local module_informations = {
   ["OS X"] = {
     x64 = {
@@ -44,7 +46,7 @@ end
 return function (service)
   local module_information = get_module_information()
   if not module_information then
-    return
+    return false
   end
 
   local filename = module_information.filename
@@ -53,11 +55,10 @@ return function (service)
 
   local f = service:check_file(filename, size, sha256)
   if f:get() then
-    return
+    return false
   end
 
-  local f = service:luasocket_download(module_information.url, filename, size, sha256)
-  if f:get() then
-    return
-  end
+  local f = service:download_luasocket(module_information.url, filename, size, sha256)
+  f:get()
+  return true
 end

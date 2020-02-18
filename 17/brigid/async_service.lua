@@ -120,9 +120,12 @@ function class:update()
   local thread_stack = self.thread_stack
   local waiting_tasks = self.waiting_tasks
 
-  local n = recv_channel:getCount()
-  for i = 1, n do
+  while true do
     local message = recv_channel:pop()
+    if not message then
+      break
+    end
+
     local status = message[1]
     local thread_id = message[2]
     local thread = thread_table[thread_id]
@@ -133,8 +136,8 @@ function class:update()
     elseif status == "progress" then
       thread:set_progress(unpack(message, 3))
     else
-      thread:set_ready(status, unpack(message, 3))
       thread_stack:push(thread)
+      thread:set_ready(status, unpack(message, 3))
     end
   end
 

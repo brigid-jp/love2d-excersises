@@ -4,6 +4,7 @@
 
 return {
   "check_file";
-  "luasocket_download";
+  "download";
+  "download_luasocket";
   "sleep";
 }

@@ -17,7 +17,14 @@ local coro
 local brigid
 
 function love.load()
-  service = async_service(0, 2, 2)
+  service = async_service(2, 2, 2)
+  local coro = coroutine.create(function ()
+    if bootloader(service) then
+      service:shutdown()
+    end
+    brigid = require "brigid"
+  end)
+  assert(coroutine.resume(coro))
 
   local coro = coroutine.create(function ()
     print "coro start"
@@ -54,12 +61,6 @@ function love.load()
   end)
   -- coroutine.resume(coro)
 
-  local coro = coroutine.create(function ()
-    bootloader(service)
-    brigid = require "brigid"
-  end)
-  assert(coroutine.resume(coro))
-
   -- service:dispatch(function ()
   --   local future = service:sleep(2)
   --   local v = future:get()
@@ -68,10 +69,16 @@ function love.load()
 end
 
 function love.update(dt)
-  service:update()
+  if service then
+    service:update()
+  end
 end
 
 function love.draw()
+  if not service then
+    return
+  end
+
   local x, y, w, h = W.getSafeArea()
   local buffer = {}
 
@@ -118,6 +125,13 @@ function love.keyreleased(key)
     local size = 1655680
     local sha256 = "\034\128\177\205\031\119\013\144\179\214\072\088\137\142\089\156\238\202\049\011\087\071\004\149\086\050\048\100\162\133\121\058"
     n = n + 1
-    tasks[n] = service:luasocket_download(url, filename, size, sha256)
+    tasks[n] = service:download_luasocket(url, filename, size, sha256)
+  elseif key == "j" then
+    local url = "https://brigid.jp/pub/mplus-TESTFLIGHT-063a/mplus-1mn-light.ttf"
+    local filename = "mplus-1mn-light.ttf"
+    local size = 1655680
+    local sha256 = "\034\128\177\205\031\119\013\144\179\214\072\088\137\142\089\156\238\202\049\011\087\071\004\149\086\050\048\100\162\133\121\058"
+    n = n + 1
+    tasks[n] = service:download(url, filename, size, sha256)
   end
 end
