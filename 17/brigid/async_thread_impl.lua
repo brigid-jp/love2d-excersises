@@ -2,16 +2,17 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/mit-license.php
 
-local love = {
-  timer = require "love.timer";
-}
 local async_promise = require "brigid.async_promise"
+local async_tasks = require "brigid.async_tasks"
 
-local tasks = {
-  check_file = require "brigid.async_task.check_file";
-  luasocket_download = require "brigid.async_task.luasocket_download";
-  sleep = require "brigid.async_task.sleep"
-}
+local task_table  = {}
+for i = 1, #async_tasks do
+  local task = async_tasks[i]
+  pcall(function ()
+    local module = require("brigid.async_task." .. task)
+    task_table[task] = module
+  end)
+end
 
 local thread_id, send_channel, intr_channel, recv_channel = ...
 
@@ -21,11 +22,11 @@ while true do
     break
   else
     local promise = async_promise(thread_id, intr_channel, send_channel)
-    local task = tasks[message[1]]
+    local task = task_table[message[1]]
     if task then
       promise:dispatch(task, promise, unpack(message, 2))
     else
-      promise:set_ready(false, "not found")
+      promise:set_ready(false, "task not found")
     end
   end
 end

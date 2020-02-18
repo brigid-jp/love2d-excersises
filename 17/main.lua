@@ -22,7 +22,7 @@ function love.load()
   local coro = coroutine.create(function ()
     print "coro start"
     for i = 1, 10 do
-      local future = service:sleep(2)
+      local future = service:sleep(2, 100)
       print("coro waiting", i)
       future:wait()
       print("coro waited", i)
@@ -34,7 +34,7 @@ function love.load()
 
   local coro = coroutine.create(function ()
     print("coro start")
-    local future = service:sleep(3)
+    local future = service:sleep(3, 100)
     local r = future:wait_for(1)
     print("wait_for(1)", r)
     local r = future:wait_for(1)
@@ -44,7 +44,7 @@ function love.load()
     local r = future:get()
     print("get()", r)
 
-    local future = service:sleep(3)
+    local future = service:sleep(3, 100)
     local r = future:wait_for(1)
     print("wait_for(1)", r)
     future:cancel()
@@ -101,11 +101,11 @@ function love.keyreleased(key)
   elseif key == "s" then
     print "s"
     n = n + 1
-    tasks[n] = service:sleep(2)
+    tasks[n] = service:sleep(2, 100)
   elseif key == "t" then
     print "t"
     n = n + 1
-    tasks[n] = service:sleep2(2)
+    tasks[n] = service:sleep(2, 1)
   elseif key == "c" then
     print "c"
     local task = tasks[n]

@@ -9,6 +9,7 @@ local love = {
 }
 
 local async_task = require "brigid.async_task"
+local async_tasks = require "brigid.async_tasks"
 local async_thread = require "brigid.async_thread"
 local binary_heap = require "brigid.binary_heap"
 local stack = require "brigid.stack"
@@ -163,20 +164,11 @@ function class:shutdown()
   end
 end
 
-function class:sleep(t)
-  return new_task(self, "sleep", t, 100)
-end
-
-function class:sleep2(t)
-  return new_task(self, "sleep", t, 1)
-end
-
-function class:check_file(...)
-  return new_task(self, "check_file", ...)
-end
-
-function class:luasocket_download(...)
-  return new_task(self, "luasocket_download", ...)
+for i = 1, #async_tasks do
+  local task = async_tasks[i]
+  class[task] = function (self, ...)
+    return new_task(self, task, ...)
+  end
 end
 
 return setmetatable(class, {
