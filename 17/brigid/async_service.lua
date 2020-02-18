@@ -163,12 +163,12 @@ function class:shutdown()
   end
 end
 
-function class:sleep(...)
-  return new_task(self, "sleep", ...)
+function class:sleep(t)
+  return new_task(self, "sleep", t, 100)
 end
 
-function class:sleep2(...)
-  return new_task(self, "sleep2", ...)
+function class:sleep2(t)
+  return new_task(self, "sleep", t, 1)
 end
 
 function class:check_file(...)

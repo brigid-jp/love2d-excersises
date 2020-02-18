@@ -10,6 +10,7 @@ local async_promise = require "brigid.async_promise"
 local tasks = {
   check_file = require "brigid.async_task.check_file";
   luasocket_download = require "brigid.async_task.luasocket_download";
+  sleep = require "brigid.async_task.sleep"
 }
 
 local thread_id, send_channel, intr_channel, recv_channel = ...
@@ -19,31 +20,12 @@ while true do
   if message == "close" then
     break
   else
-    local action = message[1]
     local promise = async_promise(thread_id, intr_channel, send_channel)
-    if action == "sleep" then
-      promise:dispatch(function (s)
-        local n = 100
-        promise:set_progress(0, n)
-        for i = 1, n do
-          if promise:check_canceled() then
-            error "canceled"
-          end
-          love.timer.sleep(s / n)
-          promise:set_progress(i, n)
-        end
-        return 42
-      end, message[2])
-    elseif action == "sleep2" then
-      promise:dispatch(function (s)
-        love.timer.sleep(s)
-        return 69
-      end, message[2])
+    local task = tasks[message[1]]
+    if task then
+      promise:dispatch(task, promise, unpack(message, 2))
     else
-      local task = tasks[action]
-      if task then
-        promise:dispatch(task, promise, unpack(message, 2))
-      end
+      promise:set_ready(false, "not found")
     end
   end
 end
