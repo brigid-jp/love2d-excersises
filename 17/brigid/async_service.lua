@@ -11,7 +11,7 @@ local love = {
 local async_task = require "brigid.async_task"
 local async_thread = require "brigid.async_thread"
 local binary_heap = require "brigid.binary_heap"
-local queue = require "brigid.queue"
+local stack = require "brigid.stack"
 
 local unpack = table.unpack or unpack
 
@@ -61,7 +61,7 @@ local function new(start_threads, max_threads, max_spare_threads)
     max_spare_threads = max_threads
   end
 
-  local thread_queue = queue()
+  local thread_stack = stack()
 
   local self = {
     max_threads = max_threads;
@@ -69,7 +69,7 @@ local function new(start_threads, max_threads, max_spare_threads)
     recv_channel = love.thread.newChannel();
     thread_id = 0;
     thread_table = {};
-    thread_queue = thread_queue;
+    thread_stack = thread_stack;
     thread_count = 0;
     task_id = 0;
     pending_tasks = binary_heap(compare_pending_task, get_pending_task_handle, set_pending_task_handle);
@@ -77,18 +77,18 @@ local function new(start_threads, max_threads, max_spare_threads)
   }
 
   for i = 1, start_threads do
-    thread_queue:push(new_thread(self))
+    thread_stack:push(new_thread(self))
   end
 
   return self
 end
 
 local function run(self)
-  local thread_queue = self.thread_queue
+  local thread_stack = self.thread_stack
   local pending_tasks = self.pending_tasks
 
   while not pending_tasks:empty() do
-    local thread = thread_queue:pop()
+    local thread = thread_stack:pop()
     if not thread then
       if self.thread_count < self.max_threads then
         thread = new_thread(self)
@@ -116,7 +116,7 @@ local metatable = { __index = class }
 function class:update()
   local recv_channel = self.recv_channel
   local thread_table = self.thread_table
-  local thread_queue = self.thread_queue
+  local thread_stack = self.thread_stack
   local waiting_tasks = self.waiting_tasks
 
   local n = recv_channel:getCount()
@@ -133,13 +133,13 @@ function class:update()
       thread:set_progress(unpack(message, 3))
     else
       thread:set_ready(status, unpack(message, 3))
-      thread_queue:push(thread)
+      thread_stack:push(thread)
     end
   end
 
   if self.pending_tasks:empty() then
-    for i = 1, thread_queue:count() - self.max_spare_threads do
-      thread_queue:pop():close()
+    for i = 1, thread_stack:count() - self.max_spare_threads do
+      thread_stack:pop():close()
     end
   else
     run(self)
@@ -165,9 +165,9 @@ function class:sleep2(...)
 end
 
 function class:test1()
-  local thread_queue = self.thread_queue
+  local thread_stack = self.thread_stack
   while true do
-    local thread = thread_queue:pop()
+    local thread = thread_stack:pop()
     if not thread then
       break
     end

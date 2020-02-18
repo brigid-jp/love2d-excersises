@@ -67,7 +67,7 @@ function love.draw()
   local x, y, w, h = W.getSafeArea()
   local buffer = {}
 
-  buffer[1] = ("thread total %d / queue %d"):format(service.thread_count, service.thread_queue:count())
+  buffer[1] = ("thread total %d / queue %d"):format(service.thread_count, service.thread_stack:count())
   buffer[2] = love.timer.getFPS() .. " fps"
   for i = 1, n do
     local task = tasks[i]
