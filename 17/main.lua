@@ -85,7 +85,7 @@ end
 function love.keyreleased(key)
   if key == "q" then
     print "q"
-    service:test1()
+    service:shutdown()
   elseif key == "s" then
     print "s"
     n = n + 1

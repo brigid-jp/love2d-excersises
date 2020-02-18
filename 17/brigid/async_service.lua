@@ -156,23 +156,19 @@ function class:update()
   end
 end
 
+function class:shutdown()
+  local thread_stack = self.thread_stack
+  for i = 1, thread_stack:count() do
+    thread_stack:pop():close()
+  end
+end
+
 function class:sleep(...)
   return new_task(self, "sleep", ...)
 end
 
 function class:sleep2(...)
   return new_task(self, "sleep2", ...)
-end
-
-function class:test1()
-  local thread_stack = self.thread_stack
-  while true do
-    local thread = thread_stack:pop()
-    if not thread then
-      break
-    end
-    thread:close()
-  end
 end
 
 return setmetatable(class, {
