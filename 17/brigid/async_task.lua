@@ -46,7 +46,6 @@ end
 function class:run(thread)
   self.status = "running"
   self.thread = thread
-  return self.action
 end
 
 function class:set_progress(...)

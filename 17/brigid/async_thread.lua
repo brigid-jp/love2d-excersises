@@ -25,11 +25,9 @@ function class:cancel()
 end
 
 function class:run(task)
-  local action = task:run(self)
-
   self.task = task
   self.intr_channel:clear()
-  self.send_channel:push(action)
+  self.send_channel:push(task.action)
 end
 
 function class:set_progress(...)

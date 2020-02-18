@@ -69,6 +69,7 @@ local function new(start_threads, max_threads, max_spare_threads)
     max_spare_threads = max_spare_threads;
     recv_channel = love.thread.newChannel();
     thread_id = 0;
+    thread_id_close = 0;
     thread_table = {};
     thread_stack = thread_stack;
     thread_count = 0;
@@ -97,7 +98,9 @@ local function run(self)
         break
       end
     end
-    thread:run(pending_tasks:pop())
+    local task = pending_tasks:pop()
+    thread:run(task)
+    task:run(thread)
   end
 end
 
@@ -164,6 +167,19 @@ function class:shutdown()
   local thread_stack = self.thread_stack
   for i = 1, thread_stack:count() do
     thread_stack:pop():close()
+  end
+end
+
+function class:restart(restart_threads)
+  if not restart_threads then
+    restart_threads = love.system.getProcessorCount()
+  end
+
+  self.thread_id_close = self.thread_id
+  self:shutdown()
+
+  for i = 1, restart_threads do
+    thread_stack:push(new_thread(self))
   end
 end
 
