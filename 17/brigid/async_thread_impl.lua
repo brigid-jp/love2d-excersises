@@ -8,6 +8,7 @@ local love = {
 local async_promise = require "brigid.async_promise"
 
 local tasks = {
+  check_file = require "brigid.check_file";
   luasocket_download = require "brigid.luasocket_download";
 }
 

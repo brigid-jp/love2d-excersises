@@ -6,6 +6,7 @@ local G = love.graphics
 local W = love.window
 
 local async_service = require "brigid.async_service"
+local bootloader = require "brigid.bootloader"
 
 local unpack = table.unpack or unpack
 
@@ -13,6 +14,7 @@ local service
 local tasks = {}
 local n = 0
 local coro
+local brigid
 
 function love.load()
   service = async_service(0, 2, 2)
@@ -52,6 +54,12 @@ function love.load()
   end)
   -- coroutine.resume(coro)
 
+  local coro = coroutine.create(function ()
+    bootloader(service)
+    brigid = require "brigid"
+  end)
+  assert(coroutine.resume(coro))
+
   -- service:dispatch(function ()
   --   local future = service:sleep(2)
   --   local v = future:get()
@@ -67,7 +75,7 @@ function love.draw()
   local x, y, w, h = W.getSafeArea()
   local buffer = {}
 
-  buffer[1] = ("thread total %d / queue %d"):format(service.thread_count, service.thread_stack:count())
+  buffer[1] = ("thread total %d / queue %d / brigid %s"):format(service.thread_count, service.thread_stack:count(), brigid)
   buffer[2] = love.timer.getFPS() .. " fps"
   for i = 1, n do
     local task = tasks[i]
