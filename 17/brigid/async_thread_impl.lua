@@ -8,8 +8,8 @@ local love = {
 local async_promise = require "brigid.async_promise"
 
 local tasks = {
-  check_file = require "brigid.check_file";
-  luasocket_download = require "brigid.luasocket_download";
+  check_file = require "brigid.async_task.check_file";
+  luasocket_download = require "brigid.async_task.luasocket_download";
 }
 
 local thread_id, send_channel, intr_channel, recv_channel = ...
