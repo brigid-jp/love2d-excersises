@@ -7,6 +7,10 @@ local love = {
 }
 
 return function (promise, t, n)
+  if not n then
+    n = 1
+  end
+
   local s = t / n
   promise:set_progress(0, n)
   for i = 1, n do

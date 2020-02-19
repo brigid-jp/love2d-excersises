@@ -7,7 +7,9 @@ local love = {
   filesystem = require "love.filesystem";
 }
 
+print("brigid loading")
 local brigid = require "brigid"
+print("brigid loaded")
 
 return function (promise, url, filename, size, sha256)
   local path = love.filesystem.getSaveDirectory() .. "/" .. filename
@@ -38,7 +40,7 @@ return function (promise, url, filename, size, sha256)
   writer:close()
 
   if size then
-    assert(now == size)
+    assert(size == now)
   end
 
   if sha256 then

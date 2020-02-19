@@ -69,7 +69,7 @@ local function new(start_threads, max_threads, max_spare_threads)
     max_spare_threads = max_spare_threads;
     recv_channel = love.thread.newChannel();
     thread_id = 0;
-    thread_id_close = 0;
+    thread_id_restart = 0;
     thread_table = {};
     thread_stack = thread_stack;
     thread_count = 0;
@@ -99,8 +99,8 @@ local function run(self)
       end
     end
     local task = pending_tasks:pop()
-    thread:run(task)
     task:run(thread)
+    thread:run(task)
   end
 end
 
@@ -139,8 +139,14 @@ function class:update()
     elseif status == "progress" then
       thread:set_progress(unpack(message, 3))
     else
-      thread_stack:push(thread)
-      thread:set_ready(status, unpack(message, 3))
+      local task = thread:set_ready()
+      if thread_id > self.thread_id_restart then
+        thread_stack:push(thread)
+      else
+        thread:close()
+        thread_stack:push(new_thread(self))
+      end
+      task:set_ready(status, unpack(message, 3))
     end
   end
 
@@ -165,19 +171,21 @@ end
 
 function class:shutdown()
   local thread_stack = self.thread_stack
+
   for i = 1, thread_stack:count() do
     thread_stack:pop():close()
   end
 end
 
-function class:restart(restart_threads)
-  if not restart_threads then
-    restart_threads = love.system.getProcessorCount()
+function class:restart()
+  local thread_stack = self.thread_stack
+
+  self.thread_id_restart = self.thread_id
+
+  local restart_threads = thread_stack:count()
+  for i = 1, restart_threads do
+    thread_stack:pop():close()
   end
-
-  self.thread_id_close = self.thread_id
-  self:shutdown()
-
   for i = 1, restart_threads do
     thread_stack:push(new_thread(self))
   end

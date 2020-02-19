@@ -17,10 +17,10 @@ local coro
 local brigid
 
 function love.load()
-  service = async_service(2, 2, 2)
+  service = async_service(4)
   local coro = coroutine.create(function ()
     if bootloader(service) then
-      service:shutdown()
+      service:restart()
     end
     brigid = require "brigid"
   end)
@@ -105,6 +105,9 @@ function love.keyreleased(key)
   if key == "q" then
     print "q"
     service:shutdown()
+  elseif key == "r" then
+    print "r"
+    service:restart()
   elseif key == "s" then
     print "s"
     n = n + 1

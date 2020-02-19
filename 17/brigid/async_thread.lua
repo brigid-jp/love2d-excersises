@@ -37,7 +37,7 @@ end
 function class:set_ready(...)
   local task = self.task
   self.task = nil
-  task:set_ready(...)
+  return task
 end
 
 function class:close()

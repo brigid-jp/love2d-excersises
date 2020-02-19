@@ -13,12 +13,16 @@ return function (promise, filename, size, sha256)
     return false
   end
 
-  if fileinfo.size ~= size then
-    return false
+  if size then
+    if size ~= fileinfo.size then
+      return false
+    end
   end
 
-  if love.data.hash("sha256", assert(love.filesystem.newFileData(filename))) ~= sha256 then
-    return false
+  if sha256 then
+    if sha256 ~= love.data.hash("sha256", assert(love.filesystem.newFileData(filename))) then
+      return false
+    end
   end
 
   return true
