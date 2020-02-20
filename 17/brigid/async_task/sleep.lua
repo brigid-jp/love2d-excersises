@@ -20,4 +20,6 @@ return function (promise, t, n)
     love.timer.sleep(s)
     promise:set_progress(i, n)
   end
+
+  return true
 end

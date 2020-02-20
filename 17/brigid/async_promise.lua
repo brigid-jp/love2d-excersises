@@ -12,6 +12,7 @@ end
 
 local class = {}
 local metatable = { __index = class }
+local runtime_assertion_metatable = {}
 
 function class:set_progress(...)
   self.send_channel:push { "progress", self.thread_id, ... }
@@ -21,7 +22,12 @@ function class:set_ready(result, ...)
   if result then
     self.send_channel:push { "success", self.thread_id, ... }
   else
-    self.send_channel:push { "failure", self.thread_id, ... }
+    local message = ...
+    if type(message) == "table" and getmetatable(message) == runtime_assertion_metatable then
+      self.send_channel:push { "success", message[1] }
+    else
+      self.send_channel:push { "failure", self.thread_id, ... }
+    end
   end
 end
 
@@ -38,8 +44,15 @@ function class:check_canceled()
   return result
 end
 
-function class:dispatch(f, ...)
-  self:set_ready(pcall(f, ...))
+function class:runtime_assert(a, b, ...)
+  if a then
+    return a, b, ...
+  else
+    if not b then
+      b = "assertion failed"
+    end
+    error(setmetatable({ b }, runtime_assertion_metatable))
+  end
 end
 
 return setmetatable(class, {

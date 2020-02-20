@@ -10,10 +10,12 @@ local socket = {
   http = require "socket.http";
 }
 
+local check_file = require "brigid.async_task.check_file"
+
 return function (promise, url, filename, size, sha256)
   local now = 0
 
-  assert(socket.http.request {
+  local result, message = socket.http.request {
     url = url;
     sink = function (chunk, e)
       if chunk then
@@ -32,14 +34,10 @@ return function (promise, url, filename, size, sha256)
         return nil, e
       end
     end;
-  })
-
-  if size then
-    local fileinfo = assert(love.filesystem.getInfo(filename))
-    assert(fileinfo.size == size)
+  }
+  if not result then
+    return nil, message
   end
 
-  if sha256 then
-    assert(love.data.hash("sha256", assert(love.filesystem.newFileData(filename))) == sha256)
-  end
+  return check_file(promise, filename, size, sha256)
 end

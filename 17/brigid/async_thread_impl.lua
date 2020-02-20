@@ -24,7 +24,7 @@ while true do
     local promise = async_promise(thread_id, intr_channel, send_channel)
     local task = task_table[message[1]]
     if task then
-      promise:dispatch(task, promise, unpack(message, 2))
+      promise:set_ready(pcall(task, promise, unpack(message, 2)))
     else
       promise:set_ready(false, "task not found")
     end

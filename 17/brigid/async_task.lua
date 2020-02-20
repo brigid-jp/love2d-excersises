@@ -92,7 +92,7 @@ function class:get()
   if status == "success" then
     return unpack(self.result)
   elseif status == "failure" then
-    return error(unpack(self.result))
+    return error((unpack(self.result)))
   end
 end
 

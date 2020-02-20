@@ -7,15 +7,17 @@ local love = {
   filesystem = require "love.filesystem";
 }
 
-print("brigid loading")
 local brigid = require "brigid"
-print("brigid loaded")
+local check_file = require "brigid.async_task.check_file"
 
 return function (promise, url, filename, size, sha256)
   local path = love.filesystem.getSaveDirectory() .. "/" .. filename
-  local writer = assert(brigid.file_writer(path))
-  local hasher = assert(brigid.hasher "sha256")
   local now = 0
+
+  local writer, message = brigid.file_writer(path)
+  if not writer then
+    return nil, message
+  end
 
   local http_session = assert(brigid.http_session {
     write = function (data)
@@ -23,27 +25,26 @@ return function (promise, url, filename, size, sha256)
         return false
       end
       assert(writer:write(data))
-      assert(hasher:update(data))
       now = now + data:get_size()
       promise:set_progress(now, size)
     end;
   })
 
-  assert(http_session:request {
+  local result, message = http_session:request {
     method = "GET";
     url = url;
     header = {
       ["User-Agent"] = "brigid/" .. brigid.get_version();
     };
-  })
+  }
 
   writer:close()
 
-  if size then
-    assert(size == now)
+  if not result then
+    love.filesystem.remove(filename)
+    return nil, message
   end
 
-  if sha256 then
-    assert(sha256 == hasher:digest())
-  end
+
+  return check_file(filename, size, sha256)
 end
