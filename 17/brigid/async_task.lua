@@ -28,6 +28,11 @@ local function resume(self, ...)
   end
 end
 
+local function is_ready(self)
+  local status = self.status
+  return status == "success" or status == "failure"
+end
+
 local class = {}
 local metatable = { __index = class }
 
@@ -65,8 +70,7 @@ function class:set_timeout()
 end
 
 function class:wait()
-  local status = self.status
-  if status == "success" or status == "failure" then
+  if is_ready(self) then
     return "ready"
   else
     self.caller = coroutine.running()
@@ -75,8 +79,7 @@ function class:wait()
 end
 
 function class:wait_for(timeout)
-  local status = self.status
-  if status == "success" or status == "failure" then
+  if is_ready(self) then
     return "ready"
   else
     self.timeout = love.timer.getTime() + timeout
