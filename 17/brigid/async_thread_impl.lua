@@ -5,6 +5,8 @@
 local async_promise = require "brigid.async_promise"
 local async_tasks = require "brigid.async_tasks"
 
+local unpack = table.unpack or unpack
+
 local task_table  = {}
 for i = 1, #async_tasks do
   local task = async_tasks[i]
