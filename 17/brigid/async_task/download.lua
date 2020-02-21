@@ -45,6 +45,5 @@ return function (promise, url, filename, size, sha256)
     return nil, message
   end
 
-
-  return check_file(filename, size, sha256)
+  return check_file(promise, filename, size, sha256)
 end

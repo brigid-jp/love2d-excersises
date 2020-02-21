@@ -15,7 +15,7 @@ return function (promise, t, n)
   promise:set_progress(0, n)
   for i = 1, n do
     if promise:check_canceled() then
-      error "canceled"
+      return nil, "canceled"
     end
     love.timer.sleep(s)
     promise:set_progress(i, n)

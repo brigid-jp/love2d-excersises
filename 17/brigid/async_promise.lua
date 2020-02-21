@@ -10,6 +10,8 @@ local function new(thread_id, intr_channel, send_channel)
   }
 end
 
+local failure_metatable = {}
+
 local class = {}
 local metatable = { __index = class }
 
@@ -17,11 +19,19 @@ function class:set_progress(...)
   self.send_channel:push { "progress", self.thread_id, ... }
 end
 
-function class:set_ready(result, ...)
-  if result then
-    self.send_channel:push { "success", self.thread_id, ... }
+function class:set_ready(pcall_result, result, ...)
+  if pcall_result then
+    if result then
+      self.send_channel:push { "success", self.thread_id, result, ... }
+    else
+      self.send_channel:push { "failure", self.thread_id, ... }
+    end
   else
-    self.send_channel:push { "failure", self.thread_id, ... }
+    if getmetatable(result) == failure_metatable then
+      self.send_channel:push { "failure", self.thread_id, result[1] }
+    else
+      self.send_channel:push { "error", self.thread_id, result }
+    end
   end
 end
 
@@ -36,6 +46,14 @@ function class:check_canceled()
     result = true
   end
   return result
+end
+
+function class:assert_failure(result, ...)
+  if result then
+    return result, ...
+  else
+    error(setmetatable({ ... }, failure_metatable))
+  end
 end
 
 return setmetatable(class, {

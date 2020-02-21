@@ -17,7 +17,7 @@ local coro
 local brigid
 
 function love.load()
-  service = async_service(4)
+  service = async_service(2)
   local coro = coroutine.create(function ()
     if bootloader(service) then
       service:restart()
@@ -87,9 +87,20 @@ function love.draw()
   for i = 1, n do
     local task = tasks[i]
     local status = task.status
-    if status == "failure" then
-      status = status .. " (" .. task.result[1] .. ")"
+    if task.result then
+      for i = 1, #task.result do
+        if i == 1 then
+          status = status .. " ("
+        else
+          status = status .. ", "
+        end
+        status = status .. tostring(task.result[i])
+      end
+      if #task.result > 0 then
+        status = status .. ")"
+      end
     end
+
     local progress = task.progress
     if progress then
       progress = ("%.2f%%"):format(progress[1] / progress[2] * 100)

@@ -30,7 +30,7 @@ end
 
 local function is_ready(self)
   local status = self.status
-  return status == "success" or status == "failure"
+  return status == "success" or status == "failure" or status == "error"
 end
 
 local class = {}
@@ -95,6 +95,8 @@ function class:get()
   if status == "success" then
     return unpack(self.result)
   elseif status == "failure" then
+    return nil, unpack(self.result)
+  elseif status == "error" then
     return error((unpack(self.result)))
   end
 end

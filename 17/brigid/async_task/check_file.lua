@@ -8,22 +8,12 @@ local love = {
 }
 
 return function (promise, filename, size, sha256)
-  local fileinfo = love.filesystem.getInfo(filename)
-  if not fileinfo then
-    return nil, "no such file"
-  end
-
+  local fileinfo = promise:assert_failure(love.filesystem.getInfo(filename))
   if size then
-    if size ~= fileinfo.size then
-      return nil, "invalid file size"
-    end
+    promise:assert_failure(size == fileinfo.size)
   end
-
   if sha256 then
-    if sha256 ~= love.data.hash("sha256", assert(love.filesystem.newFileData(filename))) then
-      return nil, "checksum mismatch"
-    end
+    promise:assert_failure(sha256 == love.data.hash("sha256", assert(love.filesystem.newFileData(filename))))
   end
-
   return true
 end
