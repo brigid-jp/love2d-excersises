@@ -36,6 +36,6 @@ end
 
 return setmetatable(class, {
   __call = function ()
-    return setmetatable({ m = 1, n = 0 }, metatable)
+    return setmetatable({ n = 0 }, metatable)
   end;
 })
