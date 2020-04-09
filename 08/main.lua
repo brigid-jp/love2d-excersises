@@ -12,5 +12,10 @@ function love.joystickadded(j)
 end
 
 function love.joystickremoved(j)
-  -- print("joystickremoved", j:getDeviceInfo())
+  print("joystickremoved", j:getGUID())
 end
+
+function love.joystickaxis(j, axis, value)
+  -- print("joystickaxis", j:getGUID(), axis, value)
+end
+
